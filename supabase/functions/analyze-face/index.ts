@@ -41,14 +41,17 @@ serve(async (req) => {
     console.log('Image data received, length:', image.length);
 
     // Get Anthropic API key from Supabase secrets
-    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY')
+    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!anthropicApiKey) {
-      console.error('Anthropic API key not configured');
+      console.error('Anthropic API key not found in environment');
       return new Response(
         JSON.stringify({ error: 'Anthropic API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    // Log the first few characters of the API key for debugging (masked)
+    console.log('API key found, starts with:', anthropicApiKey.substring(0, 8) + '...');
 
     console.log('Making request to Anthropic API...');
 
@@ -61,8 +64,7 @@ serve(async (req) => {
       headers: {
         'Authorization': `Bearer ${anthropicApiKey}`,
         'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'messages-2023-12-15'
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
         model: 'claude-3-sonnet-20240229',
