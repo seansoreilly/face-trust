@@ -5,6 +5,7 @@ import ImageUpload from "@/components/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Brain, Shield, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -26,72 +27,60 @@ const Index = () => {
     setIsProcessing(true);
     setErrorMessage("");
 
-    // Simulate API call with realistic delay
     try {
-      const result = await getTrustScore(selectedImage);
+      const result = await analyzeWithAI(selectedImage);
       navigate("/results", { 
         state: { 
           score: result.score,
-          label: result.label,
-          emoji: result.emoji,
-          imageUrl: result.croppedFaceUrl,
+          label: result.explanation,
+          emoji: getEmoji(result.score),
+          imageUrl: URL.createObjectURL(selectedImage),
           honesty: result.honesty,
           reliability: result.reliability
         }
       });
     } catch (error) {
+      console.error('Analysis error:', error);
       setErrorMessage("Failed to analyze image. Please try again.");
       setIsProcessing(false);
     }
   };
 
-  const getTrustScore = (imageFile: File): Promise<{
+  const analyzeWithAI = async (imageFile: File): Promise<{
     score: number;
-    label: string;
-    emoji: string;
-    croppedFaceUrl: string;
     honesty: number;
     reliability: number;
+    explanation: string;
   }> => {
-    return new Promise((resolve) => {
-      const baseScore = 50;
-      const randomAdjustment = Math.floor(Math.random() * 40); // 0–39
-      const finalScore = Math.min(baseScore + randomAdjustment, 100);
-      
-      // Generate sub-metric scores with some variation from the main score
-      const honestyVariation = Math.floor(Math.random() * 20) - 10; // -10 to 10
-      const reliabilityVariation = Math.floor(Math.random() * 20) - 10; // -10 to 10
-      
-      const honesty = Math.min(Math.max(finalScore + honestyVariation, 10), 100);
-      const reliability = Math.min(Math.max(finalScore + reliabilityVariation, 10), 100);
-      
-      const getScoreLabel = (score: number) => {
-        if (score > 85) return "You appear highly trustworthy and charismatic! Your facial features and expression convey confidence, openness, and authenticity. People are likely to trust you easily on first impressions.";
-        if (score > 70) return "You appear trustworthy and approachable. Your facial expression shows signs of openness and reliability. Most people would feel comfortable confiding in you based on first impressions.";
-        if (score > 55) return "You appear calm and reliable. Your facial features suggest a balanced personality with moderate levels of openness and conscientiousness.";
-        if (score > 40) return "You appear neutral and reserved. Your facial expression doesn't strongly convey either trustworthiness or untrustworthiness. People may need more interaction to form strong trust judgments.";
-        return "You appear guarded or cautious. Your facial expression may come across as reserved or serious, which some might interpret as less approachable initially.";
-      };
-
-      const getEmoji = (score: number) => {
-        if (score > 85) return "🌟";
-        if (score > 70) return "😊";
-        if (score > 55) return "🙂";
-        if (score > 40) return "😐";
-        return "🤔";
-      };
-
-      setTimeout(() => {
-        resolve({
-          score: finalScore,
-          label: getScoreLabel(finalScore),
-          emoji: getEmoji(finalScore),
-          croppedFaceUrl: URL.createObjectURL(imageFile),
-          honesty,
-          reliability
-        });
-      }, 2500);
+    // Convert image to base64
+    const base64Image = await convertToBase64(imageFile);
+    
+    const { data, error } = await supabase.functions.invoke('analyze-face', {
+      body: { image: base64Image }
     });
+
+    if (error) {
+      throw new Error(`Analysis failed: ${error.message}`);
+    }
+
+    return data;
+  };
+
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const getEmoji = (score: number) => {
+    if (score > 85) return "🌟";
+    if (score > 70) return "😊";
+    if (score > 55) return "🙂";
+    if (score > 40) return "😐";
+    return "🤔";
   };
 
   return (
