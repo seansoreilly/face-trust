@@ -124,7 +124,7 @@ const Index = () => {
           </div>
           
           <p className="text-xl text-gray-300 mb-4 max-w-2xl mx-auto">
-            How trustworthy is your face? Upload a photo and get an AI-powered trust score based on your facial expression.
+            How trustworthy does this face look? Upload a photo and get an AI-powered trust score based on facial expressions.
           </p>
           
           <div className="flex items-center justify-center gap-6 text-sm text-gray-400">
@@ -167,7 +167,7 @@ const Index = () => {
                     Analyzing Face...
                   </div>
                 ) : (
-                  "Analyze My Face"
+                  "Analyze This Face"
                 )}
               </Button>
             </div>
@@ -190,7 +190,7 @@ const Index = () => {
                 <Shield className="w-6 h-6 text-purple-400" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Privacy First</h3>
-              <p className="text-gray-400 text-sm">Your photos are processed securely and not stored</p>
+              <p className="text-gray-400 text-sm">Photos are processed securely and not stored</p>
             </div>
             
             <div className="text-center p-6">
@@ -198,7 +198,7 @@ const Index = () => {
                 <Sparkles className="w-6 h-6 text-green-400" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Instant Results</h3>
-              <p className="text-gray-400 text-sm">Get your trust score in seconds with detailed insights</p>
+              <p className="text-gray-400 text-sm">Get trust scores in seconds with detailed insights</p>
             </div>
           </div>
         </div>

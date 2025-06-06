@@ -75,7 +75,7 @@ const Results = () => {
           </Button>
           
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Your Trust Score
+            Trust Score Results
           </h1>
         </div>
 
@@ -166,7 +166,7 @@ const Results = () => {
                 className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
-                Try Another Photo
+                Analyze Another Photo
               </Button>
               
               <Button
