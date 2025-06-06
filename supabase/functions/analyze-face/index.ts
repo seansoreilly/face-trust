@@ -50,8 +50,10 @@ serve(async (req) => {
       )
     }
 
-    // Log the first few characters of the API key for debugging (masked)
-    console.log('API key found, starts with:', anthropicApiKey.substring(0, 8) + '...');
+    // More detailed API key logging for debugging
+    console.log('API key found, length:', anthropicApiKey.length);
+    console.log('API key prefix:', anthropicApiKey.substring(0, 15) + '...');
+    console.log('API key format check:', anthropicApiKey.startsWith('sk-ant-api'));
 
     console.log('Making request to Anthropic API...');
 
@@ -112,6 +114,7 @@ Respond ONLY with valid JSON in this exact format:
     })
 
     console.log('Anthropic response status:', response.status);
+    console.log('Anthropic response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text();
