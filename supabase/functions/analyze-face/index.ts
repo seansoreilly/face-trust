@@ -50,7 +50,6 @@ serve(async (req) => {
       )
     }
 
-    // More detailed API key logging for debugging
     console.log('API key found, length:', anthropicApiKey.length);
     console.log('API key prefix:', anthropicApiKey.substring(0, 15) + '...');
     console.log('API key format check:', anthropicApiKey.startsWith('sk-ant-api'));
@@ -66,7 +65,8 @@ serve(async (req) => {
       headers: {
         'Authorization': `Bearer ${anthropicApiKey}`,
         'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
+        'x-api-key': anthropicApiKey
       },
       body: JSON.stringify({
         model: 'claude-3-sonnet-20240229',
