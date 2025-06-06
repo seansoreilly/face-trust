@@ -12,23 +12,45 @@ serve(async (req) => {
   }
 
   try {
-    const { image } = await req.json()
+    console.log('Analyze-face function called');
+    
+    const requestBody = await req.text();
+    console.log('Raw request body length:', requestBody.length);
+    
+    let parsedBody;
+    try {
+      parsedBody = JSON.parse(requestBody);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { image } = parsedBody;
     
     if (!image) {
+      console.error('No image provided in request');
       return new Response(
         JSON.stringify({ error: 'No image provided' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    console.log('Image data received, length:', image.length);
+
     // Get OpenAI API key from Supabase secrets
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
     if (!openaiApiKey) {
+      console.error('OpenAI API key not configured');
       return new Response(
         JSON.stringify({ error: 'OpenAI API key not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    console.log('Making request to OpenAI API...');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -78,18 +100,27 @@ serve(async (req) => {
       }),
     })
 
+    console.log('OpenAI response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`)
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json()
+    console.log('OpenAI response received');
+    
     const aiResponse = data.choices[0].message.content
 
     // Parse the JSON response from AI
     let analysisResult
     try {
       analysisResult = JSON.parse(aiResponse)
+      console.log('Parsed AI response:', analysisResult);
     } catch (e) {
+      console.error('Failed to parse AI response as JSON:', e);
+      console.log('Raw AI response:', aiResponse);
       // Fallback if AI doesn't return valid JSON
       analysisResult = {
         score: 75,
@@ -99,10 +130,12 @@ serve(async (req) => {
       }
     }
 
-    // Ensure scores are within valid range
-    analysisResult.score = Math.max(10, Math.min(100, analysisResult.score))
-    analysisResult.honesty = Math.max(10, Math.min(100, analysisResult.honesty))
-    analysisResult.reliability = Math.max(10, Math.min(100, analysisResult.reliability))
+    // Ensure scores are within valid range and are numbers
+    analysisResult.score = Math.max(10, Math.min(100, Number(analysisResult.score) || 75));
+    analysisResult.honesty = Math.max(10, Math.min(100, Number(analysisResult.honesty) || 73));
+    analysisResult.reliability = Math.max(10, Math.min(100, Number(analysisResult.reliability) || 77));
+
+    console.log('Final analysis result:', analysisResult);
 
     return new Response(
       JSON.stringify(analysisResult),

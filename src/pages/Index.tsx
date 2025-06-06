@@ -41,7 +41,7 @@ const Index = () => {
       });
     } catch (error) {
       console.error('Analysis error:', error);
-      setErrorMessage("Failed to analyze image. Please try again.");
+      setErrorMessage(error instanceof Error ? error.message : "Failed to analyze image. Please try again.");
       setIsProcessing(false);
     }
   };
@@ -52,26 +52,52 @@ const Index = () => {
     reliability: number;
     explanation: string;
   }> => {
-    // Convert image to base64
-    const base64Image = await convertToBase64(imageFile);
-    
-    const { data, error } = await supabase.functions.invoke('analyze-face', {
-      body: { image: base64Image }
-    });
+    try {
+      // Convert image to base64
+      const base64Image = await convertToBase64(imageFile);
+      
+      console.log('Calling analyze-face function with image data...');
+      
+      const { data, error } = await supabase.functions.invoke('analyze-face', {
+        body: { image: base64Image }
+      });
 
-    if (error) {
-      throw new Error(`Analysis failed: ${error.message}`);
+      console.log('Function response:', { data, error });
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(`Analysis failed: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error('No response data received from analysis');
+      }
+
+      // Validate the response data
+      if (typeof data.score !== 'number' || typeof data.honesty !== 'number' || typeof data.reliability !== 'number') {
+        console.error('Invalid response format:', data);
+        throw new Error('Invalid response format from analysis service');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in analyzeWithAI:', error);
+      throw error;
     }
-
-    return data;
   };
 
   const convertToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result);
+      };
+      reader.onerror = (error) => {
+        console.error('File reading error:', error);
+        reject(new Error('Failed to read image file'));
+      };
     });
   };
 
