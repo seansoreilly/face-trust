@@ -124,7 +124,7 @@ const Index = () => {
           </div>
           
           <p className="text-xl text-gray-300 mb-4 max-w-2xl mx-auto">
-            How trustworthy does this face look? Upload a photo and get an AI-powered trust score based on facial expressions.
+            How trustworthy does this face look? Upload a photo and get an AI-powered trust score.
           </p>
           
           <div className="flex items-center justify-center gap-6 text-sm text-gray-400">
