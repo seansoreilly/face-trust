@@ -11,6 +11,8 @@ interface ResultState {
   label: string;
   emoji: string;
   imageUrl: string;
+  honesty: number;
+  reliability: number;
 }
 
 const Results = () => {
@@ -115,6 +117,39 @@ const Results = () => {
 
               <ScoreMeter score={showScore ? state.score : 0} />
             </Card>
+
+            {/* Sub-metrics */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Honesty Sub-metric */}
+              <Card className="p-5 bg-slate-800/50 border-slate-700 backdrop-blur-sm text-center">
+                <h3 className="text-md font-medium text-gray-300 mb-2">Honesty</h3>
+                <div className={`text-3xl font-bold bg-gradient-to-r ${getScoreColor(state.honesty)} bg-clip-text text-transparent mb-2 transition-all duration-1000 ${showScore ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
+                  {showScore ? state.honesty : 0}
+                </div>
+                <div className="w-full bg-slate-700 rounded-full h-2 mb-1">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-2000 ease-out bg-gradient-to-r ${getScoreColor(state.honesty)}`} 
+                    style={{ width: showScore ? `${state.honesty}%` : '0%' }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">Perceived truthfulness</p>
+              </Card>
+
+              {/* Reliability Sub-metric */}
+              <Card className="p-5 bg-slate-800/50 border-slate-700 backdrop-blur-sm text-center">
+                <h3 className="text-md font-medium text-gray-300 mb-2">Reliability</h3>
+                <div className={`text-3xl font-bold bg-gradient-to-r ${getScoreColor(state.reliability)} bg-clip-text text-transparent mb-2 transition-all duration-1000 ${showScore ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
+                  {showScore ? state.reliability : 0}
+                </div>
+                <div className="w-full bg-slate-700 rounded-full h-2 mb-1">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-2000 ease-out bg-gradient-to-r ${getScoreColor(state.reliability)}`} 
+                    style={{ width: showScore ? `${state.reliability}%` : '0%' }}
+                  ></div>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">Perceived dependability</p>
+              </Card>
+            </div>
 
             {/* Score Description */}
             <Card className="p-6 bg-slate-800/50 border-slate-700 backdrop-blur-sm">
