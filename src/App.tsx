@@ -11,8 +11,8 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Replace with your actual Google Analytics measurement ID
-const GA_MEASUREMENT_ID = "G-XXXXXXXXXX"; // TODO: Replace with your actual GA4 measurement ID
+// Your Google Analytics measurement ID
+const GA_MEASUREMENT_ID = "G-GLHB5EDQ0W";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
