@@ -61,5 +61,5 @@ export const {
   DEBUG,
   NODE_ENV,
   IS_DEV,
-  IS_PROD,
+  IS_PROD
 } = env; 
