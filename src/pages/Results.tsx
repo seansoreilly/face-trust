@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import ScoreMeter from "@/components/ScoreMeter";
 import { ArrowLeft, RotateCcw, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 interface ResultState {
   score: number;
@@ -19,6 +20,7 @@ const Results = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [showScore, setShowScore] = useState(false);
+  const { trackEvent } = useAnalytics();
   
   const state = location.state as ResultState;
 
@@ -28,19 +30,30 @@ const Results = () => {
       return;
     }
     
+    // Track results page view
+    trackEvent({
+      action: 'results_viewed',
+      category: 'face_analysis',
+      value: state.score
+    });
+    
     // Animate score reveal
     const timer = setTimeout(() => {
       setShowScore(true);
     }, 500);
     
     return () => clearTimeout(timer);
-  }, [state, navigate]);
+  }, [state, navigate, trackEvent]);
 
   if (!state) {
     return null;
   }
 
   const handleRetry = () => {
+    trackEvent({
+      action: 'retry_analysis',
+      category: 'face_analysis'
+    });
     navigate("/");
   };
 

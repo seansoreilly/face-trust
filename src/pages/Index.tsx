@@ -6,16 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Brain, Shield, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 const Index = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
+  const { trackEvent } = useAnalytics();
 
   const handleFileSelect = (file: File) => {
     setSelectedImage(file);
     setErrorMessage("");
+    
+    // Track file selection
+    trackEvent({
+      action: 'file_selected',
+      category: 'face_analysis',
+      label: file.type
+    });
   };
 
   const handleAnalyze = async () => {
@@ -27,8 +36,22 @@ const Index = () => {
     setIsProcessing(true);
     setErrorMessage("");
 
+    // Track analysis start
+    trackEvent({
+      action: 'analysis_started',
+      category: 'face_analysis'
+    });
+
     try {
       const result = await analyzeWithAI(selectedImage);
+      
+      // Track successful analysis
+      trackEvent({
+        action: 'analysis_completed',
+        category: 'face_analysis',
+        value: result.score
+      });
+
       navigate("/results", { 
         state: { 
           score: result.score,
@@ -41,6 +64,14 @@ const Index = () => {
       });
     } catch (error) {
       console.error('Analysis error:', error);
+      
+      // Track analysis error
+      trackEvent({
+        action: 'analysis_error',
+        category: 'face_analysis',
+        label: error instanceof Error ? error.message : 'Unknown error'
+      });
+
       setErrorMessage(error instanceof Error ? error.message : "Failed to analyze image. Please try again.");
       setIsProcessing(false);
     }
