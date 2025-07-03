@@ -9,3 +9,22 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+// Test Supabase connection
+export const testSupabaseConnection = async () => {
+  try {
+    console.log('🔌 Testing Supabase connection...');
+    const { data, error } = await supabase.from('test').select('*').limit(1);
+    
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "table not found" which is expected
+      console.error('❌ Supabase connection failed:', error);
+      return false;
+    }
+    
+    console.log('✅ Supabase connection successful');
+    return true;
+  } catch (error) {
+    console.error('❌ Supabase connection test failed:', error);
+    return false;
+  }
+};
