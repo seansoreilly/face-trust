@@ -5,7 +5,6 @@ import ImageUpload from "@/components/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Brain, Shield, Sparkles } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAnalytics } from "@/hooks/useAnalytics";
 
 const Index = () => {
@@ -84,35 +83,56 @@ const Index = () => {
     explanation: string;
   }> => {
     try {
+      console.log('🔄 Starting image analysis...');
+      console.log('📁 Image file:', imageFile.name, 'Size:', imageFile.size, 'Type:', imageFile.type);
+      
       // Convert image to base64
       const base64Image = await convertToBase64(imageFile);
+      console.log('📊 Base64 conversion complete, length:', base64Image.length);
       
-      console.log('Calling analyze-face function with image data...');
+      const apiUrl = '/api/analyze-face';
+      console.log('🌐 Making request to:', apiUrl);
       
-      const { data, error } = await supabase.functions.invoke('analyze-face', {
-        body: { image: base64Image }
+      const requestBody = {
+        image: base64Image
+      };
+      console.log('📦 Request body size:', JSON.stringify(requestBody).length);
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
       });
 
-      console.log('Function response:', { data, error });
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw new Error(`Analysis failed: ${error.message}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ API request failed:', response.status, errorText);
+        throw new Error(`API request failed: ${response.status} - ${errorText}`);
       }
 
-      if (!data) {
-        throw new Error('No response data received from analysis');
-      }
-
-      // Validate the response data
-      if (typeof data.score !== 'number' || typeof data.honesty !== 'number' || typeof data.reliability !== 'number') {
-        console.error('Invalid response format:', data);
+      const data = await response.json();
+      console.log('✅ Response data:', data);
+      
+      if (!data || typeof data.score !== 'number') {
+        console.error('❌ Invalid response format:', data);
         throw new Error('Invalid response format from analysis service');
       }
 
-      return data;
+      console.log('🎯 Analysis complete!');
+      return {
+        score: data.score,
+        honesty: data.honesty,
+        reliability: data.reliability,
+        explanation: data.explanation
+      };
     } catch (error) {
-      console.error('Error in analyzeWithAI:', error);
+      console.error('💥 Error in analyzeWithAI:', error);
+      console.error('💥 Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       throw error;
     }
   };
@@ -182,6 +202,7 @@ const Index = () => {
             {errorMessage && (
               <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                 <p className="text-red-400 text-sm">{errorMessage}</p>
+                <p className="text-red-300 text-xs mt-1">Check browser console (F12) for detailed logs</p>
               </div>
             )}
             
