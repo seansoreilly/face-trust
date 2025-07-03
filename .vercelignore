@@ -1,0 +1,128 @@
+# Development dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+bun.lockb
+
+# Source files (if using build output)
+src/
+!src/pages/api/
+
+# Development configuration
+vite.config.ts
+tsconfig.json
+tsconfig.app.json
+tsconfig.node.json
+postcss.config.js
+tailwind.config.ts
+eslint.config.js
+components.json
+
+# Build tools and configs
+.babelrc
+.babelrc.js
+babel.config.js
+webpack.config.js
+rollup.config.js
+
+# Environment files (except production)
+.env.local
+.env.development.local
+.env.test.local
+!.env.production.local
+
+# Documentation
+README.md
+*.md
+docs/
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Development tools
+.cursor/
+.taskmaster/
+.roo/
+.claude/
+.git/
+.gitignore
+.vercelignore
+
+# Task management
+tasks.json
+tasks/
+.roomodes
+.windsurfrules
+
+# Testing
+__tests__/
+test/
+tests/
+*.test.*
+*.spec.*
+jest.config.*
+.jest/
+coverage/
+
+# Logs
+logs/
+*.log
+
+# Cache directories
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# TypeScript
+*.tsbuildinfo
+
+# Linting
+.eslintrc.*
+.prettierrc.*
+.stylelintrc.*
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+circle.yml
+.circleci/
+
+# Development server files
+dev-debug.log 
