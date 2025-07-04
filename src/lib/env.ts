@@ -13,6 +13,9 @@ export const env = {
   // API configuration
   API_BASE_URL: import.meta.env.VITE_API_BASE_URL || "",
   
+  // Site configuration
+  SITE_URL: import.meta.env.VITE_SITE_URL || "facetrust.info",
+  
   // Development configuration
   DEV_MODE: import.meta.env.VITE_DEV_MODE === "true",
   DEBUG: import.meta.env.VITE_DEBUG === "true",
@@ -42,6 +45,7 @@ const validateEnv = () => {
     if (!env.API_BASE_URL) {
       console.warn("VITE_API_BASE_URL is not set - using default endpoints");
     }
+    console.log("Site URL configured as:", env.SITE_URL);
   }
 
   // Throw error if any required variables are missing
@@ -57,6 +61,7 @@ validateEnv();
 export const {
   GA_MEASUREMENT_ID,
   API_BASE_URL,
+  SITE_URL,
   DEV_MODE,
   DEBUG,
   NODE_ENV,

@@ -6,6 +6,8 @@ import ScoreMeter from "@/components/ScoreMeter";
 import { ArrowLeft, RotateCcw, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useToast } from "@/hooks/use-toast";
+import { generateShareImage } from "@/utils/shareImage";
 
 interface ResultState {
   score: number;
@@ -20,7 +22,9 @@ const Results = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [showScore, setShowScore] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const { trackEvent } = useAnalytics();
+  const { toast } = useToast();
   
   const state = location.state as ResultState;
 
@@ -55,6 +59,84 @@ const Results = () => {
       category: 'face_analysis'
     });
     navigate("/");
+  };
+
+  const handleShare = async () => {
+    if (!state) return;
+    
+    setIsSharing(true);
+    
+    try {
+      const imageBlob = await generateShareImage({
+        imageUrl: state.imageUrl,
+        score: state.score,
+        honesty: state.honesty,
+        reliability: state.reliability,
+        label: state.label,
+        emoji: state.emoji
+      });
+      
+      const file = new File([imageBlob], 'face-trust-results.png', { type: 'image/png' });
+      
+      // Try Web Share API first
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'Face Trust Analysis Results',
+          text: `My trust score: ${state.score}/100`,
+          files: [file]
+        });
+        
+        trackEvent({
+          action: 'share_results',
+          category: 'face_analysis',
+          label: 'web_share_api',
+          value: state.score
+        });
+        
+        toast({
+          title: "Results shared successfully!",
+          description: "Your face trust analysis has been shared."
+        });
+      } else {
+        // Fallback to download
+        const url = URL.createObjectURL(imageBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'face-trust-results.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        trackEvent({
+          action: 'share_results',
+          category: 'face_analysis',
+          label: 'download',
+          value: state.score
+        });
+        
+        toast({
+          title: "Results downloaded!",
+          description: "Your face trust analysis image has been saved."
+        });
+      }
+    } catch (error) {
+      console.error('Share failed:', error);
+      
+      trackEvent({
+        action: 'share_error',
+        category: 'face_analysis',
+        label: error instanceof Error ? error.message : 'unknown_error'
+      });
+      
+      toast({
+        title: "Share failed",
+        description: "Unable to share results. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   const getScoreColor = (score: number) => {
@@ -185,8 +267,11 @@ const Results = () => {
               <Button
                 variant="outline"
                 className="border-slate-600 text-gray-300 hover:bg-slate-700 hover:text-white"
+                onClick={handleShare}
+                disabled={isSharing}
               >
                 <Share2 className="w-4 h-4" />
+                {isSharing && <span className="ml-2">Sharing...</span>}
               </Button>
             </div>
           </div>
