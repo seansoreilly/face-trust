@@ -1,73 +1,146 @@
-# Welcome to your Lovable project
+# FaceTrust
 
-## Project info
+**FaceTrust** is an AI-powered web application that analyzes facial images to provide trustworthiness scores. Using advanced machine learning algorithms, it evaluates perceived trustworthiness, honesty, and reliability based on facial features and expressions.
 
-**URL**: https://lovable.dev/projects/633ee2b3-3fd5-4d3d-b141-0a2e211c9d45
+## 🌟 Features
 
-## How can I edit this code?
+- **AI-Powered Analysis**: Upload a photo and get instant trustworthiness scores
+- **Multi-Metric Evaluation**: Provides scores for overall trust, honesty, and reliability
+- **Interactive UI**: Modern, responsive interface with animated score reveals
+- **Secure Processing**: Client-side image processing with secure API communication
+- **Google Analytics Integration**: Track usage and performance metrics
+- **Real-time Results**: Fast analysis with detailed explanations
 
-There are several ways of editing your application.
+## 🛠️ Tech Stack
 
-**Use Lovable**
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **State Management**: TanStack Query (React Query)
+- **Routing**: React Router DOM
+- **Icons**: Lucide React
+- **Analytics**: Google Analytics integration
+- **Development**: ESLint, TypeScript ESLint
+- **Deployment**: Vercel-ready configuration
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/633ee2b3-3fd5-4d3d-b141-0a2e211c9d45) and start prompting.
+## 🚀 Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js (v18 or higher)
+- npm or yarn package manager
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. **Clone the repository**
+   ```bash
+   git clone <YOUR_GIT_URL>
+   cd face-trust
+   ```
 
-Follow these steps:
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3. **Set up environment variables**
+   Create a `.env.local` file in the root directory and add your API keys:
+   ```bash
+   # Add your AI service API keys here
+   VITE_GOOGLE_ANALYTICS_ID=your_ga_measurement_id
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+4. **Start the development server**
+   ```bash
+   npm run dev
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+5. **Open in browser**
+   Visit `http://localhost:5173` to see the application
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### Available Scripts
+
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build for production
+- `npm run build:dev` - Build in development mode
+- `npm run preview` - Preview production build locally
+- `npm run lint` - Run ESLint for code quality
+
+## 📱 How to Use
+
+1. **Upload Image**: Click or drag to upload a clear photo of a face
+2. **Analyze**: Click the "Analyze" button to process the image
+3. **View Results**: Get detailed trustworthiness scores and explanations
+4. **Try Again**: Upload different photos to compare results
+
+## 🎯 Score Categories
+
+- **85-100**: Highly Trustworthy 🌟
+- **70-85**: Very Trustworthy 😊
+- **55-70**: Trustworthy 🙂
+- **40-55**: Neutral 😐
+- **0-40**: Guarded 🤔
+
+## 🏗️ Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+├── pages/              # Main application pages
+│   ├── Index.tsx       # Upload and analysis page
+│   ├── Results.tsx     # Results display page
+│   └── NotFound.tsx    # 404 error page
+├── hooks/              # Custom React hooks
+├── lib/                # Utility functions and configs
+└── App.tsx             # Main application component
 ```
 
-**Edit a file directly in GitHub**
+## 🔧 Configuration
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The application uses Vite for build configuration and includes:
 
-**Use GitHub Codespaces**
+- TypeScript configuration for type safety
+- Tailwind CSS for styling
+- ESLint for code quality
+- Vercel deployment configuration
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🚢 Deployment
 
-## What technologies are used for this project?
+### Vercel (Recommended)
 
-This project is built with:
+1. Connect your repository to Vercel
+2. Configure environment variables in Vercel dashboard
+3. Deploy automatically on push to main branch
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Manual Deployment
 
-## How can I deploy this project?
+1. Build the project:
+   ```bash
+   npm run build
+   ```
 
-Simply open [Lovable](https://lovable.dev/projects/633ee2b3-3fd5-4d3d-b141-0a2e211c9d45) and click on Share -> Publish.
+2. Deploy the `dist` folder to your hosting service
 
-## Can I connect a custom domain to my Lovable project?
+## 🤝 Contributing
 
-Yes, you can!
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 📄 License
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## ⚠️ Disclaimer
+
+This application is for entertainment and research purposes only. The trustworthiness scores are based on AI algorithms analyzing facial features and should not be used for making important decisions about individuals. Results may vary and should not be considered as definitive assessments of character or trustworthiness.
+
+## 🔗 Links
+
+- **Live Demo**: [FaceTrust App](https://your-deployment-url.vercel.app)
+- **Repository**: [GitHub](https://github.com/your-username/face-trust)
+
+---
+
+*Built with ❤️ using React, TypeScript, and modern web technologies*
