@@ -7,16 +7,16 @@ pnpm-debug.log*
 bun.lockb
 
 # Source files (if using build output)
-src/
+# src/
 !src/pages/api/
 
 # Development configuration
-vite.config.ts
+# vite.config.ts
 tsconfig.json
 tsconfig.app.json
 tsconfig.node.json
-postcss.config.js
-tailwind.config.ts
+# postcss.config.js
+# tailwind.config.ts
 eslint.config.js
 components.json
 

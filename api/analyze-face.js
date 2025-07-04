@@ -36,14 +36,42 @@ export default async function handler(req, res) {
     console.log("🔍 Available environment variables:", Object.keys(process.env).filter(key => key.includes('ANTHROPIC')));
     console.log("🔍 All env vars starting with A:", Object.keys(process.env).filter(key => key.startsWith('A')));
     console.log("🔍 NODE_ENV:", process.env.NODE_ENV);
+    console.log("🔍 VERCEL_ENV:", process.env.VERCEL_ENV);
+    console.log("🔍 Total env vars count:", Object.keys(process.env).length);
     
     // Get API key from environment
     const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
     console.log("🔍 Raw ANTHROPIC_API_KEY value:", anthropicApiKey ? `Found (${anthropicApiKey.length} chars)` : 'NOT FOUND');
     
+    // Additional validation for API key format
     if (!anthropicApiKey) {
       console.error("❌ Anthropic API key not found in environment");
-      return res.status(500).json({ error: "Anthropic API key not configured" });
+      console.error("🔍 Environment variable debugging:");
+      console.error("- All env vars:", Object.keys(process.env).sort());
+      console.error("- VERCEL deployment:", process.env.VERCEL ? 'YES' : 'NO');
+      console.error("- Environment:", process.env.VERCEL_ENV || process.env.NODE_ENV || 'unknown');
+      return res.status(500).json({ 
+        error: "Anthropic API key not configured",
+        debug: {
+          vercelEnv: process.env.VERCEL_ENV,
+          nodeEnv: process.env.NODE_ENV,
+          isVercel: !!process.env.VERCEL,
+          envVarCount: Object.keys(process.env).length,
+          hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY
+        }
+      });
+    }
+    
+    // Validate API key format
+    if (!anthropicApiKey.startsWith('sk-ant-')) {
+      console.error("❌ Anthropic API key format invalid - should start with 'sk-ant-'");
+      return res.status(500).json({ 
+        error: "Anthropic API key format invalid",
+        debug: {
+          keyPrefix: anthropicApiKey.substring(0, 10) + '...',
+          expectedPrefix: 'sk-ant-'
+        }
+      });
     }
 
     console.log("🔑 API key found, length:", anthropicApiKey.length);
@@ -201,9 +229,42 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error("💥 Error in face analysis:", error);
     console.error("💥 Error stack:", error.stack);
-    res.status(500).json({
+    console.error("💥 Error name:", error.name);
+    console.error("💥 Error code:", error.code);
+    console.error("💥 Full error object:", JSON.stringify(error, null, 2));
+    
+    // Log environment for debugging
+    console.error("🔍 Environment debug:");
+    console.error("- NODE_ENV:", process.env.NODE_ENV);
+    console.error("- VERCEL_ENV:", process.env.VERCEL_ENV);
+    console.error("- VERCEL_REGION:", process.env.VERCEL_REGION);
+    console.error("- Available env vars:", Object.keys(process.env).filter(k => k.includes('ANTHROPIC')));
+    console.error("- Is Vercel deployment:", !!process.env.VERCEL);
+    console.error("- Total env vars:", Object.keys(process.env).length);
+    
+    // Enhanced error response with more debugging info
+    const errorResponse = {
       error: "Analysis failed",
       details: error.message,
-    });
+      errorName: error.name,
+      errorCode: error.code,
+      environment: process.env.VERCEL_ENV || process.env.NODE_ENV,
+      debug: {
+        isVercel: !!process.env.VERCEL,
+        vercelEnv: process.env.VERCEL_ENV,
+        nodeEnv: process.env.NODE_ENV,
+        region: process.env.VERCEL_REGION,
+        hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+        envVarCount: Object.keys(process.env).length,
+        timestamp: new Date().toISOString()
+      }
+    };
+    
+    // Add stack trace for debugging if in development
+    if (process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'development') {
+      errorResponse.stack = error.stack;
+    }
+    
+    res.status(500).json(errorResponse);
   }
 }
