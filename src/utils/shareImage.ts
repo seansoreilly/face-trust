@@ -42,15 +42,14 @@ export const generateShareImage = async (options: ShareImageOptions): Promise<Bl
     return lineCount;
   };
   
-  // Set canvas size with dynamic height
-  ctx.font = '20px Arial';
-  const maxWidth = 720; // canvas.width - 80
-  const lineCount = calculateTextLines(label, maxWidth, ctx);
+  // Calculate required width for text, then set canvas dimensions
+  ctx.font = '22px Arial';
+  const textMetrics = ctx.measureText(label);
+  const maxTextWidth = Math.max(textMetrics.width, 800); // Minimum 800px width
   
-  canvas.width = 800;
-  const baseHeight = 900; // Fixed content height
-  const textHeight = lineCount * 30; // 30px per line
-  canvas.height = baseHeight + textHeight;
+  // Set canvas size with fixed height, variable width
+  canvas.width = Math.min(Math.max(maxTextWidth + 200, 1080), 1400); // Between 1080-1400px width
+  canvas.height = 1350;
   
   // Load and draw background
   const img = new Image();
@@ -68,9 +67,9 @@ export const generateShareImage = async (options: ShareImageOptions): Promise<Bl
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         // Draw user image (circular) with proper aspect ratio
-        const imageSize = 300;
+        const imageSize = 380;
         const imageX = (canvas.width - imageSize) / 2;
-        const imageY = 95;
+        const imageY = 130;
         
         // Calculate aspect ratio and proper dimensions
         const imgAspect = img.width / img.height;
@@ -101,46 +100,46 @@ export const generateShareImage = async (options: ShareImageOptions): Promise<Bl
         
         // Draw circular border
         ctx.strokeStyle = '#64748b';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 6;
         ctx.beginPath();
         ctx.arc(imageX + imageSize/2, imageY + imageSize/2, imageSize/2, 0, Math.PI * 2);
         ctx.stroke();
         
         // Draw site URL at top
         ctx.fillStyle = '#60a5fa';
-        ctx.font = 'bold 24px Arial';
+        ctx.font = 'bold 32px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(SITE_URL, canvas.width / 2, 30);
+        ctx.fillText(SITE_URL, canvas.width / 2, 50);
         
         // Draw title
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 32px Arial';
+        ctx.font = 'bold 42px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Face Trust Analysis', canvas.width / 2, 65);
+        ctx.fillText('Face Trust Analysis', canvas.width / 2, 100);
         
         // Draw emoji
-        ctx.font = '64px Arial';
-        ctx.fillText(emoji, canvas.width / 2, 465);
+        ctx.font = '80px Arial';
+        ctx.fillText(emoji, canvas.width / 2, 580);
         
         // Draw main score
         ctx.fillStyle = getScoreColor(score);
-        ctx.font = 'bold 72px Arial';
-        ctx.fillText(score.toString(), canvas.width / 2, 545);
+        ctx.font = 'bold 96px Arial';
+        ctx.fillText(score.toString(), canvas.width / 2, 680);
         
         // Draw "out of 100"
         ctx.fillStyle = '#9ca3af';
-        ctx.font = '24px Arial';
-        ctx.fillText('out of 100', canvas.width / 2, 575);
+        ctx.font = '28px Arial';
+        ctx.fillText('out of 100', canvas.width / 2, 720);
         
         // Draw score category
         ctx.fillStyle = getScoreColor(score);
-        ctx.font = 'bold 28px Arial';
-        ctx.fillText(getScoreCategory(score), canvas.width / 2, 615);
+        ctx.font = 'bold 36px Arial';
+        ctx.fillText(getScoreCategory(score), canvas.width / 2, 770);
         
         // Draw sub-metrics
-        const metricsY = 695;
-        const metricWidth = 300;
-        const metricSpacing = 200;
+        const metricsY = 840;
+        const metricWidth = 400;
+        const metricSpacing = 280;
         
         // Honesty
         drawMetric(ctx, 'Honesty', honesty, canvas.width / 2 - metricSpacing / 2, metricsY, metricWidth);
@@ -148,36 +147,45 @@ export const generateShareImage = async (options: ShareImageOptions): Promise<Bl
         // Reliability
         drawMetric(ctx, 'Reliability', reliability, canvas.width / 2 + metricSpacing / 2, metricsY, metricWidth);
         
-        // Draw label (description)
+        // Draw label (description) - fit within fixed height with variable width
         ctx.fillStyle = '#d1d5db';
-        ctx.font = '20px Arial';
+        ctx.font = '22px Arial';
         ctx.textAlign = 'center';
         
         const words = label.split(' ');
         let line = '';
-        let lineY = 835;
+        let lineY = 980;
+        const lineHeight = 30;
+        const maxLineWidth = canvas.width - 100; // Use dynamic width with padding
         
         for (const word of words) {
           const testLine = line + word + ' ';
           const metrics = ctx.measureText(testLine);
           const testWidth = metrics.width;
           
-          if (testWidth > 720 && line !== '') {
+          // Check if we have space for another line
+          if (lineY + lineHeight > 1280) break; // Leave space for watermark
+          
+          if (testWidth > maxLineWidth && line !== '') {
             ctx.fillText(line, canvas.width / 2, lineY);
             line = word + ' ';
-            lineY += 30;
+            lineY += lineHeight;
           } else {
             line = testLine;
           }
         }
-        ctx.fillText(line, canvas.width / 2, lineY);
         
-        // Draw watermark with site URL
+        // Draw the last line if there's space
+        if (lineY <= 1280) {
+          ctx.fillText(line, canvas.width / 2, lineY);
+        }
+        
+        // Draw watermark with site URL at fixed position
         ctx.fillStyle = '#64748b';
-        ctx.font = '16px Arial';
-        ctx.fillText(SITE_URL, canvas.width / 2, canvas.height - 30);
+        ctx.font = '20px Arial';
+        ctx.fillText(SITE_URL, canvas.width / 2, 1310); // Fixed position near bottom
         console.log('Added watermark with site URL:', SITE_URL);
-        console.log('Canvas height:', canvas.height, 'Text lines:', lineCount);
+        console.log('Canvas dimensions (variable width):', canvas.width, 'x', canvas.height);
         
         // Convert to blob
         canvas.toBlob((blob) => {
@@ -223,20 +231,20 @@ const drawMetric = (
 ) => {
   // Draw metric name
   ctx.fillStyle = '#d1d5db';
-  ctx.font = '18px Arial';
+  ctx.font = '24px Arial';
   ctx.textAlign = 'center';
   ctx.fillText(name, x, y);
   
   // Draw metric value
   ctx.fillStyle = getScoreColor(value);
-  ctx.font = 'bold 32px Arial';
-  ctx.fillText(value.toString(), x, y + 40);
+  ctx.font = 'bold 42px Arial';
+  ctx.fillText(value.toString(), x, y + 50);
   
   // Draw progress bar
   const barWidth = width * 0.8;
-  const barHeight = 8;
+  const barHeight = 12;
   const barX = x - barWidth / 2;
-  const barY = y + 55;
+  const barY = y + 70;
   
   // Background bar
   ctx.fillStyle = '#374151';
