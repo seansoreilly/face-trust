@@ -62,10 +62,9 @@ app.post("/api/analyze-face", async (req, res) => {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-3-5-sonnet-20241022",
+        model: "claude-sonnet-4-5-20250929",
         max_tokens: 800,
         temperature: 0.3,
-        top_p: 0.9,
         system: `You are an expert facial psychologist and micro-expression analyst with advanced training in physiognomy and facial action coding systems (FACS).
       
       Analyze each face with extreme precision, evaluating these specific facial features and their psychological implications:
