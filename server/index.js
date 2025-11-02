@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import fetch from "node-fetch";
+import sharp from "sharp";
 import { config } from "./config.js";
 
 const app = express();
@@ -49,10 +50,26 @@ app.post("/api/analyze-face", async (req, res) => {
     console.log("🌐 Making request to Anthropic API...");
 
     // Convert base64 image to proper format for Claude
-    const base64Data = image.split(",")[1] || image;
+    let base64Data = image.split(",")[1] || image;
     const mediaType = image.startsWith("data:image/jpeg")
       ? "image/jpeg"
       : "image/png";
+
+    // Resize image if it's too large for optimal API performance
+    console.log("📸 Resizing image if necessary (max 2048x2048)...");
+    const imageBuffer = Buffer.from(base64Data, 'base64');
+    console.log("📊 Original image size:", imageBuffer.length, "bytes");
+
+    const resizedBuffer = await sharp(imageBuffer)
+      .resize(2048, 2048, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .toFormat(mediaType === 'image/jpeg' ? 'jpeg' : 'png', { quality: 85 })
+      .toBuffer();
+
+    base64Data = resizedBuffer.toString('base64');
+    console.log("📊 Resized image size:", resizedBuffer.length, "bytes");
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",

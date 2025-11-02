@@ -1,4 +1,23 @@
 {
-  "memories": [],
-  "lastUpdated": "2025-11-02T11:07:32.726Z"
+  "memories": [
+    {
+      "id": "mem_1762082306439_yxnoaqyzv",
+      "content": "Face-Trust Codebase Analysis Complete\n\nPROJECT OVERVIEW:\n- FaceTrust: AI-powered web app analyzing facial images for trustworthiness scores\n- Entertainment/research tool that evaluates perceived trustworthiness, honesty, and reliability\n- Uses Anthropic's Claude AI (specifically Claude Sonnet 4.5) for facial analysis\n- Client-side image processing with secure API communication\n- Dual deployment: Vercel (frontend + serverless API) + Express server option\n\nTECH STACK:\nFrontend: React 18 + TypeScript + Vite\nStyling: Tailwind CSS + shadcn/ui components\nState Management: TanStack Query v5.56.2\nRouting: React Router DOM v6.26.2\nForm Handling: React Hook Form v7.53.0\nCharting: Recharts v2.12.7\nIcons: Lucide React\nAnalytics: Google Analytics integration\nDev Tools: ESLint, TypeScript ESLint\n\nBackend Options:\n- Vercel Serverless Functions (api/analyze-face.js, api/test-env.js)\n- Express.js server (server/index.js) - Node.js based alternative\n\nKEY DIRECTORIES:\n- src/ - Frontend React application\n  - components/ - Reusable UI (ImageUpload, ScoreMeter, GoogleAnalytics)\n  - pages/ - Routes (Index, Results, NotFound)\n  - hooks/ - useAnalytics, useToast, useMobile\n  - lib/ - env.ts config, utils.ts\n  - utils/ - shareImage.ts for generating share-friendly images\n\n- api/ - Vercel serverless functions\n  - analyze-face.js - Main analysis endpoint\n  - test-env.js - Environment debugging\n\n- server/ - Express.js backend (optional)\n  - index.js - Express app with /api/analyze-face endpoint\n  - config.js - Configuration management\n\nAPI MODEL: Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)\n- Max tokens: 800\n- Temperature: 0.3 (precise, deterministic)\n- Takes base64 image input\n- Returns JSON with score, honesty, reliability, explanation\n\nBUILD/SCRIPTS:\n- npm run dev - Vite dev server (port 8080)\n- npm run build - Production build to dist/\n- npm run build:dev - Dev mode build\n- npm run lint - ESLint\n- npm run preview - Preview production build\n\nENVIRONMENT:\nANTHROPIC_API_KEY - Required for Vercel deployment\nVITE_GA_MEASUREMENT_ID - Google Analytics (defaults to G-GLHB5EDQ0W)\nVITE_API_BASE_URL - Optional API endpoint override\nVITE_SITE_URL - Site URL (defaults to facetrust.info)\nVITE_DEV_MODE, VITE_DEBUG - Optional dev flags\n\nROUTES:\n/ - Index page (image upload + analysis)\n/results - Results display with scores and explanation\n/* - 404 Not Found\n\nAPI ENDPOINTS:\nPOST /api/analyze-face - Analyze image (requires image base64 in body)\nGET /api/test-env - Test environment variables (Vercel only)\n\nDEPLOYMENT:\n- Primary: Vercel (frontend at facetrust.info + serverless functions)\n- Alternative: Express server on custom port\n- Vercel config has 30s timeout for analyze-face, 10s for test-env\n\nUNIQUE PATTERNS:\n- Facial analysis prompt using FACS (Facial Action Coding System)\n- Evaluates eyes, facial muscles, symmetry, micro-expressions, psychological indicators\n- Fallback scoring when AI response fails to parse\n- Canvas-based image generation for sharing results\n- Comprehensive error handling with environment debugging\n- Google Analytics event tracking integrated throughout\n- CORS enabled for cross-origin requests\n",
+      "type": "config",
+      "tags": [
+        "config",
+        "typescript",
+        "express",
+        "react",
+        "api",
+        "deployment"
+      ],
+      "timestamp": "2025-11-02T11:18:26.439Z",
+      "accessCount": 0,
+      "lastAccessed": "2025-11-02T11:18:26.439Z",
+      "lastVerified": "2025-11-02T11:18:26.439Z",
+      "status": "fresh"
+    }
+  ],
+  "lastUpdated": "2025-11-02T11:18:26.439Z"
 }
