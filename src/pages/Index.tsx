@@ -1,23 +1,48 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ImageUpload from "@/components/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Brain, Shield, Sparkles } from "lucide-react";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { prepareImage } from "@/utils/prepareImage";
+import { env } from "@/lib/env";
+
+const ANALYSIS_STATUS_MESSAGES = [
+  "Measuring zygomatic activation…",
+  "Checking micro-expressions…",
+  "Evaluating gaze steadiness…",
+  "Mapping facial symmetry…",
+  "Reading eyebrow tension…",
+  "Cross-referencing smile authenticity…",
+];
 
 const Index = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [statusIndex, setStatusIndex] = useState(0);
   const navigate = useNavigate();
   const { trackEvent } = useAnalytics();
+
+  useEffect(() => {
+    if (!isProcessing) {
+      setStatusIndex(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setStatusIndex((prev) => (prev + 1) % ANALYSIS_STATUS_MESSAGES.length);
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [isProcessing]);
 
   const handleFileSelect = (file: File) => {
     setSelectedImage(file);
     setErrorMessage("");
-    
+
     // Track file selection
     trackEvent({
       action: 'file_selected',
@@ -43,7 +68,7 @@ const Index = () => {
 
     try {
       const result = await analyzeWithAI(selectedImage);
-      
+
       // Track successful analysis
       trackEvent({
         action: 'analysis_completed',
@@ -51,8 +76,8 @@ const Index = () => {
         value: result.score
       });
 
-      navigate("/results", { 
-        state: { 
+      navigate("/results", {
+        state: {
           score: result.score,
           label: result.explanation,
           emoji: getEmoji(result.score),
@@ -62,8 +87,10 @@ const Index = () => {
         }
       });
     } catch (error) {
-      console.error('Analysis error:', error);
-      
+      if (env.DEBUG) {
+        console.error('Analysis error:', error);
+      }
+
       // Track analysis error
       trackEvent({
         action: 'analysis_error',
@@ -82,74 +109,38 @@ const Index = () => {
     reliability: number;
     explanation: string;
   }> => {
-    try {
-      console.log('🔄 Starting image analysis...');
-      console.log('📁 Image file:', imageFile.name, 'Size:', imageFile.size, 'Type:', imageFile.type);
-      
-      // Convert image to base64
-      const base64Image = await convertToBase64(imageFile);
-      console.log('📊 Base64 conversion complete, length:', base64Image.length);
-      
-      const apiUrl = '/api/analyze-face';
-      console.log('🌐 Making request to:', apiUrl);
-      
-      const requestBody = {
-        image: base64Image
-      };
-      console.log('📦 Request body size:', JSON.stringify(requestBody).length);
-      
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      });
+    // Downscale + validate the image client-side before sending it on.
+    const base64Image = await prepareImage(imageFile);
 
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ API request failed:', response.status, errorText);
-        throw new Error(`API request failed: ${response.status} - ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log('✅ Response data:', data);
-      
-      if (!data || typeof data.score !== 'number') {
-        console.error('❌ Invalid response format:', data);
-        throw new Error('Invalid response format from analysis service');
-      }
-
-      console.log('🎯 Analysis complete!');
-      return {
-        score: data.score,
-        honesty: data.honesty,
-        reliability: data.reliability,
-        explanation: data.explanation
-      };
-    } catch (error) {
-      console.error('💥 Error in analyzeWithAI:', error);
-      console.error('💥 Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-      throw error;
-    }
-  };
-
-  const convertToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const result = reader.result as string;
-        resolve(result);
-      };
-      reader.onerror = (error) => {
-        console.error('File reading error:', error);
-        reject(new Error('Failed to read image file'));
-      };
+    const response = await fetch('/api/analyze-face', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ image: base64Image })
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`API request failed: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+
+    if (!data || typeof data.score !== 'number') {
+      throw new Error('Invalid response format from analysis service');
+    }
+
+    if (data.degraded === true) {
+      throw new Error("Analysis couldn't complete this time. Please try again.");
+    }
+
+    return {
+      score: data.score,
+      honesty: data.honesty,
+      reliability: data.reliability,
+      explanation: data.explanation
+    };
   };
 
   const getEmoji = (score: number) => {
@@ -202,10 +193,17 @@ const Index = () => {
             {errorMessage && (
               <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                 <p className="text-red-400 text-sm">{errorMessage}</p>
-                <p className="text-red-300 text-xs mt-1">Check browser console (F12) for detailed logs</p>
+                <Button
+                  onClick={handleAnalyze}
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 border-red-500/30 text-red-300 hover:bg-red-500/10 hover:text-red-200"
+                >
+                  Try Again
+                </Button>
               </div>
             )}
-            
+
             <div className="mt-6 text-center">
               <Button
                 onClick={handleAnalyze}
@@ -214,9 +212,14 @@ const Index = () => {
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold transition-all duration-200 hover:scale-105"
               >
                 {isProcessing ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Analyzing Face...
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin motion-reduce:animate-none" />
+                      Analyzing Face...
+                    </div>
+                    <span className="text-xs font-normal text-white/70 motion-reduce:transition-none transition-opacity duration-300">
+                      {ANALYSIS_STATUS_MESSAGES[statusIndex]}
+                    </span>
                   </div>
                 ) : (
                   "Analyze This Face"
