@@ -68,8 +68,11 @@ vercel env pull       # Creates .env.local
 | `src/pages/Index.tsx` | Main upload & analysis page |
 | `src/pages/Results.tsx` | Results display with scoring |
 | `src/utils/shareImage.ts` | Canvas-based image generation for sharing |
-| `api/analyze-face.js` | Vercel serverless function - calls Claude API |
-| `server/index.js` | Express backend alternative |
+| `api/analyze-face.js` | Vercel serverless function - thin wrapper around `lib/analyze-core.js` |
+| `server/index.js` | Express backend alternative - thin wrapper around `lib/analyze-core.js` |
+| `lib/analyze-core.js` | Shared analysis core: prompt, image resize, Anthropic call, response parsing/clamping |
+| `lib/cors.js` | Shared CORS allowlist used by both backends |
+| `lib/rate-limit.js` | In-memory per-IP rate limiter (Vercel handler) |
 | `src/lib/env.ts` | Centralized environment configuration with validation |
 | `src/components/GoogleAnalytics.tsx` | Analytics integration |
 | `.env.local` | Local environment variables (gitignored) |
@@ -80,14 +83,9 @@ vercel env pull       # Creates .env.local
 ### POST /api/analyze-face
 - **Purpose**: Analyze facial image for trustworthiness
 - **Request**: `{ "image": "data:image/jpeg;base64,..." }`
-- **Response**: `{ "score": 0-100, "honesty": 0-100, "reliability": 0-100, "explanation": "..." }`
+- **Response**: `{ "score": 0-100, "honesty": 0-100, "reliability": 0-100, "explanation": "...", "degraded"?: true }`
 - **Timeout**: 30 seconds (Vercel)
-- **Features**: CORS enabled, error fallback with random scores, JSON validation
-
-### GET /api/test-env (Vercel only)
-- **Purpose**: Debug environment variables and configuration
-- **Response**: Lists all environment variables and deployment context
-- **Timeout**: 10 seconds (Vercel)
+- **Features**: CORS allowlist, per-IP rate limiting (10 req/min), input validation, degraded-response fallback if the model's output isn't valid JSON (`degraded: true` signals the frontend to treat the result as unavailable/retry)
 
 ## Environment Variables
 
@@ -127,14 +125,17 @@ Returns **precise measurements** (e.g., "3mm elevation", "4mm depression", "15% 
 - Only `temperature` is specified; `top_p` cannot be used simultaneously
 
 ### 2. Robust Error Handling
-If Claude response isn't valid JSON:
+If Claude's response isn't valid JSON, `lib/analyze-core.js` returns a clearly-marked degraded response instead of presenting fabricated scores as real analysis:
 ```javascript
-// Fallback to generic response with random variation
-score: 45 + Math.random()*30,      // 45-75 range
-honesty: 40 + Math.random()*30,    // 40-70 range
-reliability: 50 + Math.random()*30 // 50-80 range
+{
+  score: DEFAULT_SCORE,           // 50
+  honesty: DEFAULT_HONESTY,       // 48
+  reliability: DEFAULT_RELIABILITY, // 52
+  explanation: "We couldn't complete a full analysis of this image.",
+  degraded: true,
+}
 ```
-This ensures app never crashes and always returns valid results.
+The frontend contract: `degraded === true` means "analysis unavailable, retry" — it should not be presented as a real result. This ensures the app never crashes and always returns a valid, honestly-labeled response.
 
 ### 3. Client-Side Image Processing
 - **No server storage** - Images processed immediately, never persisted
@@ -154,11 +155,16 @@ export const env = {
 ```
 
 ### 5. CORS Configuration
-All API endpoints support CORS for cross-origin requests:
+CORS is restricted to an allowlist (`lib/cors.js`), echoing the request origin only if it matches:
 ```javascript
-res.setHeader('Access-Control-Allow-Origin', '*');
-res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+const ALLOWED_ORIGINS = [
+  'https://facetrust.info',
+  'https://www.facetrust.info',
+  'http://localhost:5173',
+  'http://localhost:3001',
+];
 ```
+Applied consistently by both `api/analyze-face.js` (Vercel) and `server/index.js` (Express).
 
 ## Deployment
 
@@ -177,10 +183,10 @@ res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
 ## Common Development Tasks
 
 ### Making Changes to API Analysis
-1. Modify prompt in `api/analyze-face.js` (line 96-152) or `server/index.js` (line 69-125)
-2. Adjust temperature/max_tokens in API request body
+1. Modify the system prompt, model settings, and response parsing in `lib/analyze-core.js` (shared by both `api/analyze-face.js` and `server/index.js`)
+2. Adjust `MODEL`/`TEMPERATURE`/`MAX_TOKENS` constants in `lib/analyze-core.js`
 3. Test locally: `npm run dev` (frontend) + `cd server && npm run dev` (backend)
-4. Verify JSON response structure matches fallback in error handler
+4. Verify JSON response structure matches the fallback in `parseAnalysisResponse`
 
 ### Adding New Pages
 1. Create component in `src/pages/YourPage.tsx`
@@ -190,19 +196,18 @@ res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
 
 ### Debugging API Issues
 1. Check `.env.local` has `ANTHROPIC_API_KEY` starting with `sk-ant-`
-2. Use `GET /api/test-env` endpoint to verify environment
-3. Check Vercel/Express logs for error details
-4. Verify image is valid base64 with correct media type
+2. Check Vercel/Express logs for error details (server-side `console.error` only; responses no longer include debug/env details)
+3. Verify image is valid base64 with correct media type
 
 ### Updating Claude Model
-1. Change `model` field in API request body (currently: `claude-sonnet-4-5-20250929`)
+1. Change the `MODEL` constant in `lib/analyze-core.js` (currently: `claude-sonnet-4-5-20250929`)
 2. Note: Cannot use both `temperature` and `top_p` - only `temperature` is supported
-3. Update in both `api/analyze-face.js` and `server/index.js`
+3. Shared by both `api/analyze-face.js` and `server/index.js` automatically
 
 ## Debugging Tips
 
 - **Google Analytics**: Check `VITE_GA_MEASUREMENT_ID` format (must be `G-[A-Z0-9]+`)
-- **API errors**: Backend returns detailed debug object with environment context
+- **API errors**: Backend logs details server-side via `console.error`; responses to the client only contain `{ error: "..." }` (no stack traces, env info, or debug objects)
 - **Image encoding**: Verify image is properly base64 encoded with correct MIME type
 - **CORS issues**: Check that backend CORS headers are set correctly
 - **Claude API**: Validate `ANTHROPIC_API_KEY` format starts with `sk-ant-`
@@ -219,6 +224,6 @@ res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
 
 - The application is **stateless** - no database means no user history or persistence
 - **Claude Sonnet 4.5** is the current model; newer versions can be substituted by updating the model ID
-- **Fallback scoring** provides graceful degradation if Claude API fails
+- **Degraded-response fallback** provides graceful degradation if Claude's output isn't valid JSON, clearly marked with `degraded: true` rather than presented as a real result
 - **Precise FACS measurements** in the prompt improve consistency of responses
-- Consider implementing rate limiting if deploying publicly with tight API budgets
+- **Rate limiting**: `api/analyze-face.js` has an in-memory per-IP limiter (10 req/min, `lib/rate-limit.js`); it's per-instance/best-effort under Fluid Compute — swap for a shared store (e.g. Redis/Upstash) if strict enforcement is needed
