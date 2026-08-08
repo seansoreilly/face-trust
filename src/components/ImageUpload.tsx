@@ -58,9 +58,19 @@ const ImageUpload = ({ onFileSelect, selectedImage, isProcessing }: ImageUploadP
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      onFileSelect(file);
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "That doesn't look like an image",
+        description: "Please choose a JPEG or PNG photo.",
+        variant: "destructive",
+      });
+      e.target.value = "";
+      return;
     }
+
+    onFileSelect(file);
   };
 
   return (
