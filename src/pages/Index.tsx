@@ -8,6 +8,8 @@ import { Brain, Shield, Sparkles } from "lucide-react";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { prepareImage } from "@/utils/prepareImage";
 import { env } from "@/lib/env";
+import { getScoreEmoji } from "@/lib/scoring";
+import Disclaimer from "@/components/Disclaimer";
 
 const ANALYSIS_STATUS_MESSAGES = [
   "Measuring zygomatic activation…",
@@ -80,7 +82,7 @@ const Index = () => {
         state: {
           score: result.score,
           label: result.explanation,
-          emoji: getEmoji(result.score),
+          emoji: getScoreEmoji(result.score),
           imageUrl: URL.createObjectURL(selectedImage),
           honesty: result.honesty,
           reliability: result.reliability
@@ -141,14 +143,6 @@ const Index = () => {
       reliability: data.reliability,
       explanation: data.explanation
     };
-  };
-
-  const getEmoji = (score: number) => {
-    if (score > 85) return "🌟";
-    if (score > 70) return "😊";
-    if (score > 55) return "🙂";
-    if (score > 40) return "😐";
-    return "🤔";
   };
 
   return (
@@ -257,6 +251,7 @@ const Index = () => {
             </div>
           </div>
         </div>
+        <Disclaimer />
       </div>
     </div>
   );
