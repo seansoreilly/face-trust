@@ -20,13 +20,13 @@ const NotFound = () => {
         <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl">
           <Brain className="w-8 h-8 text-white" />
         </div>
-        <span className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+        <span className="font-display text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
           FaceTrust
         </span>
       </div>
 
       <div className="text-center">
-        <h1 className="text-6xl font-bold text-white mb-4">404</h1>
+        <h1 className="font-mono text-6xl font-bold text-white mb-4">404</h1>
         <p className="text-xl text-gray-300 mb-8">
           This face isn't one we recognize. The page you're looking for doesn't exist.
         </p>

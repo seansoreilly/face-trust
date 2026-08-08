@@ -144,7 +144,8 @@ const Results = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="container mx-auto px-4 py-8">
+      <div aria-hidden className="pointer-events-none fixed inset-0 bg-atmosphere" />
+      <div className="relative container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button
@@ -157,7 +158,7 @@ const Results = () => {
             Back
           </Button>
           
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          <h1 className="font-display text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
             Trust Score Results
           </h1>
         </div>
@@ -174,7 +175,7 @@ const Results = () => {
             </div>
             
             <div className="text-center">
-              <p className="text-gray-300 text-sm">Analyzed Photo</p>
+              <p className="font-mono text-xs uppercase tracking-[0.2em] text-gray-400">Analyzed Photo</p>
             </div>
           </Card>
 
@@ -188,11 +189,11 @@ const Results = () => {
                 </div>
 
                 <div className={`transition-all duration-1000 delay-300 motion-reduce:transition-none motion-reduce:duration-0 motion-reduce:delay-0 ${showScore ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-                  <div className={`text-6xl font-bold bg-gradient-to-r ${getScoreColor(state.score)} bg-clip-text text-transparent mb-2`}>
+                  <div className={`font-mono tabular-nums text-6xl font-bold bg-gradient-to-r ${getScoreColor(state.score)} bg-clip-text text-transparent mb-2`}>
                     {showScore ? state.score : 0}
                   </div>
-                  <div className="text-gray-400 text-sm mb-1">out of 100</div>
-                  <div className={`text-xl font-semibold bg-gradient-to-r ${getScoreColor(state.score)} bg-clip-text text-transparent`}>
+                  <div className="font-mono text-xs uppercase tracking-[0.2em] text-gray-400 mb-1">out of 100</div>
+                  <div className={`font-display text-xl font-semibold bg-gradient-to-r ${getScoreColor(state.score)} bg-clip-text text-transparent`}>
                     {getScoreCategory(state.score)}
                   </div>
                 </div>
@@ -224,7 +225,7 @@ const Results = () => {
 
             {/* Score Description */}
             <Card className="p-6 bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-              <h3 className="text-lg font-semibold text-white mb-3">Analysis</h3>
+              <h3 className="font-display text-lg font-semibold text-white mb-3">Analysis</h3>
               <p className="text-gray-300 leading-relaxed">
                 {state.label}
               </p>
@@ -256,7 +257,7 @@ const Results = () => {
 
         {/* Tips */}
         <Card className="mt-12 max-w-4xl mx-auto p-6 bg-slate-800/30 border-slate-700">
-          <h3 className="text-lg font-semibold text-white mb-4">💡 Tips for Better Scores</h3>
+          <h3 className="font-display text-lg font-semibold text-white mb-4">💡 Tips for Better Scores</h3>
           <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-300">
             <div>
               <h4 className="font-medium text-white mb-2">Facial Expression</h4>

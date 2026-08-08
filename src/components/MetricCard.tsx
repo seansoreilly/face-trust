@@ -12,9 +12,9 @@ interface MetricCardProps {
 const MetricCard = ({ label, value, description, show, delayClassName = "" }: MetricCardProps) => {
   return (
     <Card className="p-5 bg-slate-800/50 border-slate-700 backdrop-blur-sm text-center">
-      <h3 className="text-md font-medium text-gray-300 mb-2">{label}</h3>
+      <h3 className="font-mono text-xs uppercase tracking-[0.2em] text-gray-400 mb-2">{label}</h3>
       <div
-        className={`text-3xl font-bold bg-gradient-to-r ${getScoreColor(value)} bg-clip-text text-transparent mb-2 transition-all duration-1000 motion-reduce:transition-none motion-reduce:duration-0 ${delayClassName} ${show ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}
+        className={`font-mono tabular-nums text-3xl font-bold bg-gradient-to-r ${getScoreColor(value)} bg-clip-text text-transparent mb-2 transition-all duration-1000 motion-reduce:transition-none motion-reduce:duration-0 ${delayClassName} ${show ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}
       >
         {show ? value : 0}
       </div>

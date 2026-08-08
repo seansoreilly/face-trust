@@ -69,7 +69,15 @@ export default {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
+			fontFamily: {
+				display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+				mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace']
+			},
 			keyframes: {
+				scan: {
+					'0%': { top: '-10%' },
+					'100%': { top: '105%' }
+				},
 				'accordion-down': {
 					from: {
 						height: '0'
@@ -88,6 +96,7 @@ export default {
 				}
 			},
 			animation: {
+				scan: 'scan 2.4s ease-in-out infinite alternate',
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
 			}

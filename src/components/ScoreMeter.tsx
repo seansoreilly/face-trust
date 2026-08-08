@@ -79,7 +79,7 @@ const ScoreMeter = ({ score }: ScoreMeterProps) => {
         
         {/* Score text in center */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-2xl font-bold text-white">
+          <span className="font-mono tabular-nums text-2xl font-bold text-white">
             {Math.round(animatedScore)}%
           </span>
         </div>
