@@ -3,11 +3,14 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import ScoreMeter from "@/components/ScoreMeter";
+import MetricCard from "@/components/MetricCard";
+import Disclaimer from "@/components/Disclaimer";
 import { ArrowLeft, RotateCcw, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useToast } from "@/hooks/use-toast";
 import { generateShareImage } from "@/utils/shareImage";
+import { getScoreCategory, getScoreColor } from "@/lib/scoring";
 
 interface ResultState {
   score: number;
@@ -139,21 +142,6 @@ const Results = () => {
     }
   };
 
-  const getScoreColor = (score: number) => {
-    if (score > 80) return "from-green-400 to-emerald-500";
-    if (score > 60) return "from-blue-400 to-cyan-500";
-    if (score > 40) return "from-yellow-400 to-orange-500";
-    return "from-red-400 to-pink-500";
-  };
-
-  const getScoreCategory = (score: number) => {
-    if (score > 85) return "Highly Trustworthy";
-    if (score > 70) return "Very Trustworthy";
-    if (score > 55) return "Trustworthy";
-    if (score > 40) return "Neutral";
-    return "Guarded";
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <div className="container mx-auto px-4 py-8">
@@ -195,11 +183,11 @@ const Results = () => {
             {/* Score Display */}
             <Card className="p-8 bg-slate-800/50 border-slate-700 backdrop-blur-sm text-center">
               <div className="mb-6">
-                <div className={`text-6xl mb-2 transition-all duration-1000 ${showScore ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
+                <div className={`text-6xl mb-2 transition-all duration-1000 motion-reduce:transition-none motion-reduce:duration-0 ${showScore ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
                   {state.emoji}
                 </div>
-                
-                <div className={`transition-all duration-1000 delay-300 ${showScore ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+
+                <div className={`transition-all duration-1000 delay-300 motion-reduce:transition-none motion-reduce:duration-0 motion-reduce:delay-0 ${showScore ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
                   <div className={`text-6xl font-bold bg-gradient-to-r ${getScoreColor(state.score)} bg-clip-text text-transparent mb-2`}>
                     {showScore ? state.score : 0}
                   </div>
@@ -215,35 +203,23 @@ const Results = () => {
 
             {/* Sub-metrics */}
             <div className="grid grid-cols-2 gap-4">
-              {/* Honesty Sub-metric */}
-              <Card className="p-5 bg-slate-800/50 border-slate-700 backdrop-blur-sm text-center">
-                <h3 className="text-md font-medium text-gray-300 mb-2">Honesty</h3>
-                <div className={`text-3xl font-bold bg-gradient-to-r ${getScoreColor(state.honesty)} bg-clip-text text-transparent mb-2 transition-all duration-1000 ${showScore ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
-                  {showScore ? state.honesty : 0}
-                </div>
-                <div className="w-full bg-slate-700 rounded-full h-2 mb-1">
-                  <div 
-                    className={`h-2 rounded-full transition-all duration-2000 ease-out bg-gradient-to-r ${getScoreColor(state.honesty)}`} 
-                    style={{ width: showScore ? `${state.honesty}%` : '0%' }}
-                  ></div>
-                </div>
-                <p className="text-xs text-gray-400 mt-2">Perceived truthfulness</p>
-              </Card>
+              <div className={`transition-all duration-1000 delay-500 motion-reduce:transition-none motion-reduce:duration-0 motion-reduce:delay-0 ${showScore ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+                <MetricCard
+                  label="Honesty"
+                  value={state.honesty}
+                  description="Perceived truthfulness"
+                  show={showScore}
+                />
+              </div>
 
-              {/* Reliability Sub-metric */}
-              <Card className="p-5 bg-slate-800/50 border-slate-700 backdrop-blur-sm text-center">
-                <h3 className="text-md font-medium text-gray-300 mb-2">Reliability</h3>
-                <div className={`text-3xl font-bold bg-gradient-to-r ${getScoreColor(state.reliability)} bg-clip-text text-transparent mb-2 transition-all duration-1000 ${showScore ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
-                  {showScore ? state.reliability : 0}
-                </div>
-                <div className="w-full bg-slate-700 rounded-full h-2 mb-1">
-                  <div 
-                    className={`h-2 rounded-full transition-all duration-2000 ease-out bg-gradient-to-r ${getScoreColor(state.reliability)}`} 
-                    style={{ width: showScore ? `${state.reliability}%` : '0%' }}
-                  ></div>
-                </div>
-                <p className="text-xs text-gray-400 mt-2">Perceived dependability</p>
-              </Card>
+              <div className={`transition-all duration-1000 delay-700 motion-reduce:transition-none motion-reduce:duration-0 motion-reduce:delay-0 ${showScore ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+                <MetricCard
+                  label="Reliability"
+                  value={state.reliability}
+                  description="Perceived dependability"
+                  show={showScore}
+                />
+              </div>
             </div>
 
             {/* Score Description */}
@@ -266,12 +242,13 @@ const Results = () => {
               
               <Button
                 variant="outline"
+                size="lg"
                 className="border-slate-600 text-gray-300 hover:bg-slate-700 hover:text-white"
                 onClick={handleShare}
                 disabled={isSharing}
               >
-                <Share2 className="w-4 h-4" />
-                {isSharing && <span className="ml-2">Sharing...</span>}
+                <Share2 className="w-4 h-4 mr-2" />
+                {isSharing ? "Sharing..." : "Share"}
               </Button>
             </div>
           </div>
@@ -299,6 +276,8 @@ const Results = () => {
             </div>
           </div>
         </Card>
+
+        <Disclaimer />
       </div>
     </div>
   );

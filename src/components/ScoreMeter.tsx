@@ -7,14 +7,22 @@ interface ScoreMeterProps {
 
 const ScoreMeter = ({ score }: ScoreMeterProps) => {
   const [animatedScore, setAnimatedScore] = useState(0);
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
   useEffect(() => {
+    if (prefersReducedMotion) {
+      setAnimatedScore(score);
+      return;
+    }
+
     const timer = setTimeout(() => {
       setAnimatedScore(score);
     }, 800);
 
     return () => clearTimeout(timer);
-  }, [score]);
+  }, [score, prefersReducedMotion]);
 
   const getColorByScore = (score: number) => {
     if (score > 80) return "#10b981"; // green
@@ -37,6 +45,8 @@ const ScoreMeter = ({ score }: ScoreMeterProps) => {
           height={radius * 2}
           width={radius * 2}
           className="transform -rotate-90"
+          role="img"
+          aria-label={`Trust score: ${Math.round(animatedScore)} out of 100`}
         >
           {/* Background circle */}
           <circle
@@ -47,7 +57,7 @@ const ScoreMeter = ({ score }: ScoreMeterProps) => {
             cx={radius}
             cy={radius}
           />
-          
+
           {/* Progress circle */}
           <circle
             stroke={getColorByScore(animatedScore)}
@@ -56,7 +66,9 @@ const ScoreMeter = ({ score }: ScoreMeterProps) => {
             strokeDasharray={strokeDasharray}
             style={{
               strokeDashoffset,
-              transition: 'stroke-dashoffset 2s ease-in-out, stroke 0.5s ease'
+              transition: prefersReducedMotion
+                ? 'none'
+                : 'stroke-dashoffset 2s ease-in-out, stroke 0.5s ease'
             }}
             strokeLinecap="round"
             r={normalizedRadius}
