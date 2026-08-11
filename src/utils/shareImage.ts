@@ -20,28 +20,6 @@ export const generateShareImage = async (options: ShareImageOptions): Promise<Bl
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas not supported');
   
-  // Calculate text height needed
-  const calculateTextLines = (text: string, maxWidth: number, ctx: CanvasRenderingContext2D): number => {
-    const words = text.split(' ');
-    let line = '';
-    let lineCount = 0;
-    
-    for (const word of words) {
-      const testLine = line + word + ' ';
-      const metrics = ctx.measureText(testLine);
-      const testWidth = metrics.width;
-      
-      if (testWidth > maxWidth && line !== '') {
-        lineCount++;
-        line = word + ' ';
-      } else {
-        line = testLine;
-      }
-    }
-    if (line.trim()) lineCount++; // Add the last line
-    return lineCount;
-  };
-  
   // Calculate required width for text, then set canvas dimensions
   ctx.font = '22px Arial';
   const textMetrics = ctx.measureText(label);

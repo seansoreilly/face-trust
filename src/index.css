@@ -101,3 +101,14 @@
     @apply bg-background text-foreground;
   }
 }
+@layer utilities {
+  /* Ambient lab atmosphere: faint dot grid + two soft radial glows.
+     Layered as a fixed overlay div so it composes with Tailwind gradients. */
+  .bg-atmosphere {
+    background-image:
+      radial-gradient(ellipse 60% 45% at 50% -5%, hsl(258 75% 60% / 0.16), transparent 70%),
+      radial-gradient(ellipse 45% 35% at 85% 105%, hsl(217 85% 60% / 0.10), transparent 70%),
+      radial-gradient(hsl(240 30% 80% / 0.05) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 28px 28px;
+  }
+}

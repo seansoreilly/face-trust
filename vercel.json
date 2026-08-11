@@ -2,9 +2,6 @@
   "functions": {
     "api/analyze-face.js": {
       "maxDuration": 30
-    },
-    "api/test-env.js": {
-      "maxDuration": 10
     }
   }
 }
