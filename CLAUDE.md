@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**FaceTrust** is an AI-powered web application that analyzes facial images to provide trustworthiness scores. The application uses Claude Sonnet 4.5 with facial action coding system (FACS) analysis to evaluate facial features and provide three metrics: overall trustworthiness, honesty, and reliability. Results include detailed psychological explanations based on specific facial features detected.
+**FaceTrust** is an AI-powered web application that analyzes facial images to provide trustworthiness scores. The application uses Claude Sonnet 4.6 with facial action coding system (FACS) analysis to evaluate facial features and provide three metrics: overall trustworthiness, honesty, and reliability. Results include detailed psychological explanations based on specific facial features detected.
 
 **Disclaimer**: This application is for entertainment and research purposes only.
 
@@ -38,7 +38,7 @@ React (Vite) → Vercel Serverless / Express → Anthropic Claude API
 | **Icons** | Lucide React |
 | **Analytics** | Google Analytics (gtag) |
 | **Backend** | Vercel Serverless (primary) or Express.js |
-| **AI Model** | Claude Sonnet 4.5 (claude-sonnet-4-5-20250929) |
+| **AI Model** | Claude Sonnet 4.6 (claude-sonnet-4-6) |
 | **Build** | Vite 5.4.19 |
 | **Linting** | ESLint 9.9.0 + TypeScript ESLint |
 
@@ -82,7 +82,7 @@ vercel env pull       # Creates .env.local
 - **Request**: `{ "image": "data:image/jpeg;base64,..." }`
 - **Response**: `{ "score": 0-100, "honesty": 0-100, "reliability": 0-100, "explanation": "..." }`
 - **Timeout**: 30 seconds (Vercel)
-- **Features**: CORS enabled, error fallback with random scores, JSON validation
+- **Features**: CORS enabled, structured outputs (guaranteed-valid JSON), 502 on unreadable AI response
 
 ### GET /api/test-env (Vercel only)
 - **Purpose**: Debug environment variables and configuration
@@ -127,14 +127,10 @@ Returns **precise measurements** (e.g., "3mm elevation", "4mm depression", "15% 
 - Only `temperature` is specified; `top_p` cannot be used simultaneously
 
 ### 2. Robust Error Handling
-If Claude response isn't valid JSON:
-```javascript
-// Fallback to generic response with random variation
-score: 45 + Math.random()*30,      // 45-75 range
-honesty: 40 + Math.random()*30,    // 40-70 range
-reliability: 50 + Math.random()*30 // 50-80 range
-```
-This ensures app never crashes and always returns valid results.
+The request uses structured outputs (`output_config.format` with a JSON schema),
+so the API guarantees the response is valid JSON matching the expected shape.
+If parsing still fails (truncated or refused response), the endpoint returns a
+502 error instead of fabricating scores. Scores are clamped to 10-100 in code.
 
 ### 3. Client-Side Image Processing
 - **No server storage** - Images processed immediately, never persisted
@@ -195,7 +191,7 @@ res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
 4. Verify image is valid base64 with correct media type
 
 ### Updating Claude Model
-1. Change `model` field in API request body (currently: `claude-sonnet-4-5-20250929`)
+1. Change `model` field in API request body (currently: `claude-sonnet-4-6`)
 2. Note: Cannot use both `temperature` and `top_p` - only `temperature` is supported
 3. Update in both `api/analyze-face.js` and `server/index.js`
 
@@ -218,7 +214,7 @@ res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
 ## Notes for Future Development
 
 - The application is **stateless** - no database means no user history or persistence
-- **Claude Sonnet 4.5** is the current model; newer versions can be substituted by updating the model ID
-- **Fallback scoring** provides graceful degradation if Claude API fails
+- **Claude Sonnet 4.6** is the current model; newer versions can be substituted by updating the model ID (note: Sonnet 5+ rejects `temperature`, so that swap needs code changes)
+- **Structured outputs** guarantee valid JSON; API failures surface as 5xx errors rather than fabricated scores
 - **Precise FACS measurements** in the prompt improve consistency of responses
 - Consider implementing rate limiting if deploying publicly with tight API budgets
