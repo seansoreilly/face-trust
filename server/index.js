@@ -7,6 +7,21 @@ import { config } from "./config.js";
 const app = express();
 const PORT = config.PORT || 3001;
 
+// Structured-outputs schema: the API guarantees the response is valid JSON
+// matching this shape. Numeric ranges are enforced by the clamping below
+// (the structured-outputs API does not support minimum/maximum constraints).
+const ANALYSIS_SCHEMA = {
+  type: "object",
+  properties: {
+    score: { type: "integer", description: "Overall trustworthiness, 10-100" },
+    honesty: { type: "integer", description: "Truthfulness indicators, 10-100" },
+    reliability: { type: "integer", description: "Consistency and dependability, 10-100" },
+    explanation: { type: "string", description: "150-250 word FACS-based analysis" },
+  },
+  required: ["score", "honesty", "reliability", "explanation"],
+  additionalProperties: false,
+};
+
 // Middleware
 app.use(cors({
   origin: ['http://localhost:8080', 'http://localhost:3000', 'http://127.0.0.1:8080', 'http://127.0.0.1:3000'],
@@ -79,9 +94,15 @@ app.post("/api/analyze-face", async (req, res) => {
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-5-20250929",
+        model: "claude-sonnet-4-6",
         max_tokens: 800,
         temperature: 0.3,
+        output_config: {
+          format: {
+            type: "json_schema",
+            schema: ANALYSIS_SCHEMA,
+          },
+        },
         system: `You are an expert facial psychologist and micro-expression analyst with advanced training in physiognomy and facial action coding systems (FACS).
       
       Analyze each face with extreme precision, evaluating these specific facial features and their psychological implications:
@@ -190,18 +211,15 @@ app.post("/api/analyze-face", async (req, res) => {
       analysisResult = JSON.parse(aiResponse);
       console.log("Parsed AI response:", analysisResult);
     } catch (e) {
+      // Structured outputs guarantee valid JSON, so this only fires on a
+      // truncated (max_tokens) or refused response — surface it instead of
+      // fabricating scores.
       console.error("Failed to parse AI response as JSON:", e);
       console.log("Raw response that failed:", aiResponse);
-
-      // Fallback with detailed response
-      const randomVariation = Math.floor(Math.random() * 30) + 10;
-      analysisResult = {
-        score: 45 + randomVariation,
-        honesty: 40 + randomVariation,
-        reliability: 50 + randomVariation,
-        explanation:
-          "Analysis indicates moderate baseline trustworthiness. The facial structure shows balanced symmetry with neutral muscle tension throughout. Direct gaze is maintained with average pupil dilation. Slight activation of the zygomatic muscles suggests controlled emotional expression. The orbicularis oculi shows minimal engagement, indicating a social rather than genuine smile. Forehead displays mild frontalis tension with superficial horizontal lines. No significant micro-expressions detected. Overall presentation suggests a guarded but not deceptive demeanor, with emotional regulation evident in the controlled facial muscle activation patterns.",
-      };
+      return res.status(502).json({
+        error: "Analysis returned an unreadable response",
+        details: "The AI response was not valid JSON. Please try again.",
+      });
     }
 
     // Ensure scores are within valid range
