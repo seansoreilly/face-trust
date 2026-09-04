@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Brain, Shield, Sparkles } from "lucide-react";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { analyzeFace } from "@/lib/analyzeFace";
+import { getEmoji } from "@/lib/scoring";
 
 const Index = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -17,7 +19,7 @@ const Index = () => {
   const handleFileSelect = (file: File) => {
     setSelectedImage(file);
     setErrorMessage("");
-    
+
     // Track file selection
     trackEvent({
       action: 'file_selected',
@@ -42,8 +44,8 @@ const Index = () => {
     });
 
     try {
-      const result = await analyzeWithAI(selectedImage);
-      
+      const result = await analyzeFace(selectedImage);
+
       // Track successful analysis
       trackEvent({
         action: 'analysis_completed',
@@ -51,8 +53,8 @@ const Index = () => {
         value: result.score
       });
 
-      navigate("/results", { 
-        state: { 
+      navigate("/results", {
+        state: {
           score: result.score,
           label: result.explanation,
           emoji: getEmoji(result.score),
@@ -63,7 +65,7 @@ const Index = () => {
       });
     } catch (error) {
       console.error('Analysis error:', error);
-      
+
       // Track analysis error
       trackEvent({
         action: 'analysis_error',
@@ -74,90 +76,6 @@ const Index = () => {
       setErrorMessage(error instanceof Error ? error.message : "Failed to analyze image. Please try again.");
       setIsProcessing(false);
     }
-  };
-
-  const analyzeWithAI = async (imageFile: File): Promise<{
-    score: number;
-    honesty: number;
-    reliability: number;
-    explanation: string;
-  }> => {
-    try {
-      console.log('🔄 Starting image analysis...');
-      console.log('📁 Image file:', imageFile.name, 'Size:', imageFile.size, 'Type:', imageFile.type);
-      
-      // Convert image to base64
-      const base64Image = await convertToBase64(imageFile);
-      console.log('📊 Base64 conversion complete, length:', base64Image.length);
-      
-      const apiUrl = '/api/analyze-face';
-      console.log('🌐 Making request to:', apiUrl);
-      
-      const requestBody = {
-        image: base64Image
-      };
-      console.log('📦 Request body size:', JSON.stringify(requestBody).length);
-      
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ API request failed:', response.status, errorText);
-        throw new Error(`API request failed: ${response.status} - ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log('✅ Response data:', data);
-      
-      if (!data || typeof data.score !== 'number') {
-        console.error('❌ Invalid response format:', data);
-        throw new Error('Invalid response format from analysis service');
-      }
-
-      console.log('🎯 Analysis complete!');
-      return {
-        score: data.score,
-        honesty: data.honesty,
-        reliability: data.reliability,
-        explanation: data.explanation
-      };
-    } catch (error) {
-      console.error('💥 Error in analyzeWithAI:', error);
-      console.error('💥 Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-      throw error;
-    }
-  };
-
-  const convertToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const result = reader.result as string;
-        resolve(result);
-      };
-      reader.onerror = (error) => {
-        console.error('File reading error:', error);
-        reject(new Error('Failed to read image file'));
-      };
-    });
-  };
-
-  const getEmoji = (score: number) => {
-    if (score > 85) return "🌟";
-    if (score > 70) return "😊";
-    if (score > 55) return "🙂";
-    if (score > 40) return "😐";
-    return "🤔";
   };
 
   return (
@@ -173,11 +91,11 @@ const Index = () => {
               FaceTrust
             </h1>
           </div>
-          
+
           <p className="text-xl text-gray-300 mb-4 max-w-2xl mx-auto">
             How trustworthy does this face look? Upload a photo and get an AI-powered trust score.
           </p>
-          
+
           <div className="flex items-center justify-center gap-6 text-sm text-gray-400">
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
@@ -198,14 +116,13 @@ const Index = () => {
               selectedImage={selectedImage}
               isProcessing={isProcessing}
             />
-            
+
             {errorMessage && (
-              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg" role="alert">
                 <p className="text-red-400 text-sm">{errorMessage}</p>
-                <p className="text-red-300 text-xs mt-1">Check browser console (F12) for detailed logs</p>
               </div>
             )}
-            
+
             <div className="mt-6 text-center">
               <Button
                 onClick={handleAnalyze}
@@ -236,7 +153,7 @@ const Index = () => {
               <h3 className="text-lg font-semibold text-white mb-2">AI Analysis</h3>
               <p className="text-gray-400 text-sm">Advanced facial expression analysis using machine learning</p>
             </div>
-            
+
             <div className="text-center p-6">
               <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Shield className="w-6 h-6 text-purple-400" />
@@ -244,7 +161,7 @@ const Index = () => {
               <h3 className="text-lg font-semibold text-white mb-2">Privacy First</h3>
               <p className="text-gray-400 text-sm">Photos are processed securely and not stored</p>
             </div>
-            
+
             <div className="text-center p-6">
               <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-6 h-6 text-green-400" />

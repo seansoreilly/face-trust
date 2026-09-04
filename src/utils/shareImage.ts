@@ -1,4 +1,5 @@
 import { SITE_URL } from '@/lib/env';
+import { getScoreCategory, getScoreHexColor } from '@/lib/scoring';
 
 interface ShareImageOptions {
   imageUrl: string;
@@ -122,7 +123,7 @@ export const generateShareImage = async (options: ShareImageOptions): Promise<Bl
         ctx.fillText(emoji, canvas.width / 2, 580);
         
         // Draw main score
-        ctx.fillStyle = getScoreColor(score);
+        ctx.fillStyle = getScoreHexColor(score);
         ctx.font = 'bold 96px Arial';
         ctx.fillText(score.toString(), canvas.width / 2, 680);
         
@@ -132,7 +133,7 @@ export const generateShareImage = async (options: ShareImageOptions): Promise<Bl
         ctx.fillText('out of 100', canvas.width / 2, 720);
         
         // Draw score category
-        ctx.fillStyle = getScoreColor(score);
+        ctx.fillStyle = getScoreHexColor(score);
         ctx.font = 'bold 36px Arial';
         ctx.fillText(getScoreCategory(score), canvas.width / 2, 770);
         
@@ -206,21 +207,6 @@ export const generateShareImage = async (options: ShareImageOptions): Promise<Bl
   });
 };
 
-const getScoreColor = (score: number): string => {
-  if (score > 80) return '#10b981';
-  if (score > 60) return '#06b6d4';
-  if (score > 40) return '#f59e0b';
-  return '#ef4444';
-};
-
-const getScoreCategory = (score: number): string => {
-  if (score > 85) return 'Highly Trustworthy';
-  if (score > 70) return 'Very Trustworthy';
-  if (score > 55) return 'Trustworthy';
-  if (score > 40) return 'Neutral';
-  return 'Guarded';
-};
-
 const drawMetric = (
   ctx: CanvasRenderingContext2D,
   name: string,
@@ -236,7 +222,7 @@ const drawMetric = (
   ctx.fillText(name, x, y);
   
   // Draw metric value
-  ctx.fillStyle = getScoreColor(value);
+  ctx.fillStyle = getScoreHexColor(value);
   ctx.font = 'bold 42px Arial';
   ctx.fillText(value.toString(), x, y + 50);
   
@@ -251,6 +237,6 @@ const drawMetric = (
   ctx.fillRect(barX, barY, barWidth, barHeight);
   
   // Progress bar
-  ctx.fillStyle = getScoreColor(value);
+  ctx.fillStyle = getScoreHexColor(value);
   ctx.fillRect(barX, barY, (barWidth * value) / 100, barHeight);
 };

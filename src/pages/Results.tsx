@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useToast } from "@/hooks/use-toast";
 import { generateShareImage } from "@/utils/shareImage";
+import { getScoreCategory, getScoreGradient } from "@/lib/scoring";
 
 interface ResultState {
   score: number;
@@ -23,6 +24,7 @@ const Results = () => {
   const navigate = useNavigate();
   const [showScore, setShowScore] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [imageLoadFailed, setImageLoadFailed] = useState(false);
   const { trackEvent } = useAnalytics();
   const { toast } = useToast();
   
@@ -139,21 +141,6 @@ const Results = () => {
     }
   };
 
-  const getScoreColor = (score: number) => {
-    if (score > 80) return "from-green-400 to-emerald-500";
-    if (score > 60) return "from-blue-400 to-cyan-500";
-    if (score > 40) return "from-yellow-400 to-orange-500";
-    return "from-red-400 to-pink-500";
-  };
-
-  const getScoreCategory = (score: number) => {
-    if (score > 85) return "Highly Trustworthy";
-    if (score > 70) return "Very Trustworthy";
-    if (score > 55) return "Trustworthy";
-    if (score > 40) return "Neutral";
-    return "Guarded";
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <div className="container mx-auto px-4 py-8">
@@ -177,12 +164,17 @@ const Results = () => {
         <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
           {/* Face Image */}
           <Card className="p-6 bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-            <div className="aspect-square rounded-2xl overflow-hidden bg-slate-700 mb-4">
-              <img
-                src={state.imageUrl}
-                alt="Analyzed face"
-                className="w-full h-full object-cover"
-              />
+            <div className="aspect-square rounded-2xl overflow-hidden bg-slate-700 mb-4 flex items-center justify-center">
+              {imageLoadFailed ? (
+                <p className="text-gray-400 text-sm px-4 text-center">Image preview unavailable</p>
+              ) : (
+                <img
+                  src={state.imageUrl}
+                  alt="Analyzed face"
+                  className="w-full h-full object-cover"
+                  onError={() => setImageLoadFailed(true)}
+                />
+              )}
             </div>
             
             <div className="text-center">
@@ -200,11 +192,11 @@ const Results = () => {
                 </div>
                 
                 <div className={`transition-all duration-1000 delay-300 ${showScore ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
-                  <div className={`text-6xl font-bold bg-gradient-to-r ${getScoreColor(state.score)} bg-clip-text text-transparent mb-2`}>
+                  <div className={`text-6xl font-bold bg-gradient-to-r ${getScoreGradient(state.score)} bg-clip-text text-transparent mb-2`}>
                     {showScore ? state.score : 0}
                   </div>
                   <div className="text-gray-400 text-sm mb-1">out of 100</div>
-                  <div className={`text-xl font-semibold bg-gradient-to-r ${getScoreColor(state.score)} bg-clip-text text-transparent`}>
+                  <div className={`text-xl font-semibold bg-gradient-to-r ${getScoreGradient(state.score)} bg-clip-text text-transparent`}>
                     {getScoreCategory(state.score)}
                   </div>
                 </div>
@@ -218,12 +210,12 @@ const Results = () => {
               {/* Honesty Sub-metric */}
               <Card className="p-5 bg-slate-800/50 border-slate-700 backdrop-blur-sm text-center">
                 <h3 className="text-md font-medium text-gray-300 mb-2">Honesty</h3>
-                <div className={`text-3xl font-bold bg-gradient-to-r ${getScoreColor(state.honesty)} bg-clip-text text-transparent mb-2 transition-all duration-1000 ${showScore ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
+                <div className={`text-3xl font-bold bg-gradient-to-r ${getScoreGradient(state.honesty)} bg-clip-text text-transparent mb-2 transition-all duration-1000 ${showScore ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
                   {showScore ? state.honesty : 0}
                 </div>
                 <div className="w-full bg-slate-700 rounded-full h-2 mb-1">
                   <div 
-                    className={`h-2 rounded-full transition-all duration-2000 ease-out bg-gradient-to-r ${getScoreColor(state.honesty)}`} 
+                    className={`h-2 rounded-full transition-all duration-2000 ease-out bg-gradient-to-r ${getScoreGradient(state.honesty)}`} 
                     style={{ width: showScore ? `${state.honesty}%` : '0%' }}
                   ></div>
                 </div>
@@ -233,12 +225,12 @@ const Results = () => {
               {/* Reliability Sub-metric */}
               <Card className="p-5 bg-slate-800/50 border-slate-700 backdrop-blur-sm text-center">
                 <h3 className="text-md font-medium text-gray-300 mb-2">Reliability</h3>
-                <div className={`text-3xl font-bold bg-gradient-to-r ${getScoreColor(state.reliability)} bg-clip-text text-transparent mb-2 transition-all duration-1000 ${showScore ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
+                <div className={`text-3xl font-bold bg-gradient-to-r ${getScoreGradient(state.reliability)} bg-clip-text text-transparent mb-2 transition-all duration-1000 ${showScore ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
                   {showScore ? state.reliability : 0}
                 </div>
                 <div className="w-full bg-slate-700 rounded-full h-2 mb-1">
                   <div 
-                    className={`h-2 rounded-full transition-all duration-2000 ease-out bg-gradient-to-r ${getScoreColor(state.reliability)}`} 
+                    className={`h-2 rounded-full transition-all duration-2000 ease-out bg-gradient-to-r ${getScoreGradient(state.reliability)}`} 
                     style={{ width: showScore ? `${state.reliability}%` : '0%' }}
                   ></div>
                 </div>
@@ -269,9 +261,10 @@ const Results = () => {
                 className="border-slate-600 text-gray-300 hover:bg-slate-700 hover:text-white"
                 onClick={handleShare}
                 disabled={isSharing}
+                aria-label={isSharing ? "Sharing results" : "Share results"}
               >
-                <Share2 className="w-4 h-4" />
-                {isSharing && <span className="ml-2">Sharing...</span>}
+                <Share2 className="w-4 h-4" aria-hidden="true" />
+                <span className="ml-2">{isSharing ? "Sharing..." : "Share"}</span>
               </Button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Upload, Image as ImageIcon } from "lucide-react";
 
@@ -10,14 +10,30 @@ interface ImageUploadProps {
 }
 
 const ImageUpload = ({ onFileSelect, selectedImage, isProcessing }: ImageUploadProps) => {
+  const [dropError, setDropError] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedImage) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(selectedImage);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [selectedImage]);
+
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       const files = Array.from(e.dataTransfer.files);
       const imageFile = files.find(file => file.type.startsWith('image/'));
-      
+
       if (imageFile) {
+        setDropError("");
         onFileSelect(imageFile);
+      } else if (files.length > 0) {
+        setDropError("Please drop an image file (JPG or PNG)");
       }
     },
     [onFileSelect]
@@ -30,6 +46,7 @@ const ImageUpload = ({ onFileSelect, selectedImage, isProcessing }: ImageUploadP
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setDropError("");
       onFileSelect(file);
     }
   };
@@ -40,27 +57,31 @@ const ImageUpload = ({ onFileSelect, selectedImage, isProcessing }: ImageUploadP
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
-        className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
+        className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 focus-within:ring-offset-slate-900 ${
           isProcessing
             ? "border-gray-600 bg-gray-800/30"
             : "border-gray-600 hover:border-blue-500 bg-slate-700/30 hover:bg-slate-700/50 cursor-pointer"
         }`}
       >
+        <label htmlFor="face-image-input" className="sr-only">
+          Upload a photo to analyze (JPG or PNG)
+        </label>
         <input
+          id="face-image-input"
           type="file"
           accept="image/*"
           onChange={handleFileInput}
           disabled={isProcessing}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
         />
-        
+
         <div className="space-y-4">
           <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center ${
             isProcessing ? "bg-gray-700" : "bg-slate-600"
           }`}>
             <Upload className={`w-8 h-8 ${isProcessing ? "text-gray-400" : "text-gray-300"}`} />
           </div>
-          
+
           <div>
             <p className={`text-lg font-medium ${isProcessing ? "text-gray-400" : "text-gray-200"}`}>
               {isProcessing ? "Processing..." : "Drop your photo here"}
@@ -72,31 +93,31 @@ const ImageUpload = ({ onFileSelect, selectedImage, isProcessing }: ImageUploadP
         </div>
       </div>
 
+      {dropError && (
+        <p className="text-red-400 text-sm" role="alert">{dropError}</p>
+      )}
+
       {/* Image Preview */}
-      {selectedImage && (
+      {selectedImage && previewUrl && (
         <Card className="p-4 bg-slate-700/30 border-slate-600">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-slate-600 rounded-lg flex items-center justify-center overflow-hidden">
-              {selectedImage ? (
-                <img
-                  src={URL.createObjectURL(selectedImage)}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <ImageIcon className="w-6 h-6 text-gray-400" />
-              )}
+              <img
+                src={previewUrl}
+                alt={`Preview of ${selectedImage.name}`}
+                className="w-full h-full object-cover"
+              />
             </div>
-            
+
             <div className="flex-1 min-w-0">
               <p className="text-white font-medium truncate">{selectedImage.name}</p>
               <p className="text-gray-400 text-sm">
                 {(selectedImage.size / 1024 / 1024).toFixed(2)} MB
               </p>
             </div>
-            
+
             <div className="text-green-400">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
             </div>
