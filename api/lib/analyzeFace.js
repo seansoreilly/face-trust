@@ -78,15 +78,31 @@ async function prepareImage(image) {
   return { base64Data: resizedBuffer.toString('base64'), mediaType };
 }
 
-function fallbackResult() {
-  const randomVariation = Math.floor(Math.random() * 30) + 10;
-  return {
-    score: 45 + randomVariation,
-    honesty: 40 + randomVariation,
-    reliability: 50 + randomVariation,
-    explanation:
-      'Analysis indicates moderate baseline trustworthiness. The facial structure shows balanced symmetry with neutral muscle tension throughout. Direct gaze is maintained with average pupil dilation. Slight activation of the zygomatic muscles suggests controlled emotional expression. The orbicularis oculi shows minimal engagement, indicating a social rather than genuine smile. Forehead displays mild frontalis tension with superficial horizontal lines. No significant micro-expressions detected. Overall presentation suggests a guarded but not deceptive demeanor, with emotional regulation evident in the controlled facial muscle activation patterns.',
-  };
+// Structured-outputs schema: the API guarantees the response is valid JSON
+// matching this shape. Numeric ranges are enforced by the clamping below
+// (the structured-outputs API does not support minimum/maximum constraints).
+const ANALYSIS_SCHEMA = {
+  type: 'object',
+  properties: {
+    score: { type: 'integer', description: 'Overall trustworthiness, 10-100' },
+    honesty: { type: 'integer', description: 'Truthfulness indicators, 10-100' },
+    reliability: { type: 'integer', description: 'Consistency and dependability, 10-100' },
+    explanation: { type: 'string', description: '150-250 word FACS-based analysis' },
+  },
+  required: ['score', 'honesty', 'reliability', 'explanation'],
+  additionalProperties: false,
+};
+
+/**
+ * Thrown when the model response is not valid JSON. With structured outputs
+ * this only happens on a truncated (max_tokens) or refused response, so it
+ * is surfaced to the caller instead of fabricating scores.
+ */
+export class UnreadableAnalysisError extends Error {
+  constructor(rawText) {
+    super('Analysis returned an unreadable response');
+    this.rawText = rawText;
+  }
 }
 
 function parseAnalysisResponse(rawText) {
@@ -102,7 +118,7 @@ function parseAnalysisResponse(rawText) {
   try {
     result = JSON.parse(text);
   } catch {
-    result = fallbackResult();
+    throw new UnreadableAnalysisError(rawText);
   }
 
   result.score = Math.max(10, Math.min(100, Number(result.score) || 50));
@@ -139,9 +155,15 @@ export async function analyzeFaceImage(image, anthropicApiKey) {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-6',
       max_tokens: 800,
       temperature: 0.3,
+      output_config: {
+        format: {
+          type: 'json_schema',
+          schema: ANALYSIS_SCHEMA,
+        },
+      },
       system: SYSTEM_PROMPT,
       messages: [
         {

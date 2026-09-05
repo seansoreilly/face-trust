@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { config } from "./config.js";
-import { analyzeFaceImage, AnthropicApiError } from "../api/lib/analyzeFace.js";
+import { analyzeFaceImage, AnthropicApiError, UnreadableAnalysisError } from "../api/lib/analyzeFace.js";
 
 const app = express();
 const PORT = config.PORT || 3001;
@@ -40,6 +40,13 @@ app.post("/api/analyze-face", async (req, res) => {
     res.json(analysisResult);
   } catch (error) {
     console.error("Error in face analysis:", error);
+
+    if (error instanceof UnreadableAnalysisError) {
+      return res.status(502).json({
+        error: "Analysis returned an unreadable response",
+        details: "The AI response was not valid JSON. Please try again.",
+      });
+    }
 
     const errorResponse = { error: "Analysis failed" };
     if (isDev) {
