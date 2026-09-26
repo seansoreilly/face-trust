@@ -6,5 +6,11 @@
     "api/test-env.js": {
       "maxDuration": 10
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/results",
+      "destination": "/index.html"
+    }
+  ]
 }
