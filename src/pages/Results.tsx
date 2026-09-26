@@ -209,7 +209,7 @@ const Results = () => {
             <div className="grid grid-cols-2 gap-4">
               {/* Honesty Sub-metric */}
               <Card className="p-5 bg-slate-800/50 border-slate-700 backdrop-blur-sm text-center">
-                <h3 className="text-md font-medium text-gray-300 mb-2">Honesty</h3>
+                <h2 className="text-md font-medium text-gray-300 mb-2">Honesty</h2>
                 <div className={`text-3xl font-bold bg-gradient-to-r ${getScoreGradient(state.honesty)} bg-clip-text text-transparent mb-2 transition-all duration-1000 ${showScore ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
                   {showScore ? state.honesty : 0}
                 </div>
@@ -224,7 +224,7 @@ const Results = () => {
 
               {/* Reliability Sub-metric */}
               <Card className="p-5 bg-slate-800/50 border-slate-700 backdrop-blur-sm text-center">
-                <h3 className="text-md font-medium text-gray-300 mb-2">Reliability</h3>
+                <h2 className="text-md font-medium text-gray-300 mb-2">Reliability</h2>
                 <div className={`text-3xl font-bold bg-gradient-to-r ${getScoreGradient(state.reliability)} bg-clip-text text-transparent mb-2 transition-all duration-1000 ${showScore ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`}>
                   {showScore ? state.reliability : 0}
                 </div>
@@ -240,7 +240,7 @@ const Results = () => {
 
             {/* Score Description */}
             <Card className="p-6 bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-              <h3 className="text-lg font-semibold text-white mb-3">Analysis</h3>
+              <h2 className="text-lg font-semibold text-white mb-3">Analysis</h2>
               <p className="text-gray-300 leading-relaxed">
                 {state.label}
               </p>
@@ -272,10 +272,10 @@ const Results = () => {
 
         {/* Tips */}
         <Card className="mt-12 max-w-4xl mx-auto p-6 bg-slate-800/30 border-slate-700">
-          <h3 className="text-lg font-semibold text-white mb-4">💡 Tips for Better Scores</h3>
+          <h2 className="text-lg font-semibold text-white mb-4">💡 Tips for Better Scores</h2>
           <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-300">
             <div>
-              <h4 className="font-medium text-white mb-2">Facial Expression</h4>
+              <h3 className="font-medium text-white mb-2">Facial Expression</h3>
               <ul className="space-y-1">
                 <li>• Relaxed, genuine smile</li>
                 <li>• Open, confident posture</li>
@@ -283,7 +283,7 @@ const Results = () => {
               </ul>
             </div>
             <div>
-              <h4 className="font-medium text-white mb-2">Photo Quality</h4>
+              <h3 className="font-medium text-white mb-2">Photo Quality</h3>
               <ul className="space-y-1">
                 <li>• Good lighting on face</li>
                 <li>• Clear, high-resolution image</li>

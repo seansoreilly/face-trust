@@ -150,7 +150,7 @@ const Index = () => {
               <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Brain className="w-6 h-6 text-blue-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">AI Analysis</h3>
+              <h2 className="text-lg font-semibold text-white mb-2">AI Analysis</h2>
               <p className="text-gray-400 text-sm">Advanced facial expression analysis using machine learning</p>
             </div>
 
@@ -158,7 +158,7 @@ const Index = () => {
               <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Shield className="w-6 h-6 text-purple-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Privacy First</h3>
+              <h2 className="text-lg font-semibold text-white mb-2">Privacy First</h2>
               <p className="text-gray-400 text-sm">Photos are processed securely and not stored</p>
             </div>
 
@@ -166,7 +166,7 @@ const Index = () => {
               <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
                 <Sparkles className="w-6 h-6 text-green-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Instant Results</h3>
+              <h2 className="text-lg font-semibold text-white mb-2">Instant Results</h2>
               <p className="text-gray-400 text-sm">Get trust scores in seconds with detailed insights</p>
             </div>
           </div>
