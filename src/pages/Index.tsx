@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Brain, Shield, Sparkles } from "lucide-react";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { analyzeFace } from "@/lib/analyzeFace";
+import { classifyError, getScoreBand } from "@/lib/analytics";
 import { getEmoji } from "@/lib/scoring";
 
 const Index = () => {
@@ -21,11 +22,7 @@ const Index = () => {
     setErrorMessage("");
 
     // Track file selection
-    trackEvent({
-      action: 'file_selected',
-      category: 'face_analysis',
-      label: file.type
-    });
+    trackEvent('file_selected', { file_type: file.type || 'unknown' });
   };
 
   const handleAnalyze = async () => {
@@ -38,19 +35,15 @@ const Index = () => {
     setErrorMessage("");
 
     // Track analysis start
-    trackEvent({
-      action: 'analysis_started',
-      category: 'face_analysis'
-    });
+    trackEvent('analysis_started', { file_type: selectedImage.type || 'unknown' });
 
     try {
       const result = await analyzeFace(selectedImage);
 
       // Track successful analysis
-      trackEvent({
-        action: 'analysis_completed',
-        category: 'face_analysis',
-        value: result.score
+      trackEvent('analysis_completed', {
+        score: result.score,
+        score_band: getScoreBand(result.score)
       });
 
       navigate("/results", {
@@ -67,11 +60,7 @@ const Index = () => {
       console.error('Analysis error:', error);
 
       // Track analysis error
-      trackEvent({
-        action: 'analysis_error',
-        category: 'face_analysis',
-        label: error instanceof Error ? error.message : 'Unknown error'
-      });
+      trackEvent('analysis_error', { error_type: classifyError(error) });
 
       setErrorMessage(error instanceof Error ? error.message : "Failed to analyze image. Please try again.");
       setIsProcessing(false);

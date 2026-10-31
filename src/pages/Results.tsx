@@ -6,6 +6,7 @@ import ScoreMeter from "@/components/ScoreMeter";
 import { ArrowLeft, RotateCcw, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { classifyError, getScoreBand } from "@/lib/analytics";
 import { useToast } from "@/hooks/use-toast";
 import { generateShareImage } from "@/utils/shareImage";
 import { getScoreCategory, getScoreGradient } from "@/lib/scoring";
@@ -37,10 +38,9 @@ const Results = () => {
     }
     
     // Track results page view
-    trackEvent({
-      action: 'results_viewed',
-      category: 'face_analysis',
-      value: state.score
+    trackEvent('results_viewed', {
+      score: state.score,
+      score_band: getScoreBand(state.score)
     });
     
     // Animate score reveal
@@ -56,10 +56,7 @@ const Results = () => {
   }
 
   const handleRetry = () => {
-    trackEvent({
-      action: 'retry_analysis',
-      category: 'face_analysis'
-    });
+    trackEvent('retry_analysis', { score_band: getScoreBand(state.score) });
     navigate("/");
   };
 
@@ -88,11 +85,9 @@ const Results = () => {
           files: [file]
         });
         
-        trackEvent({
-          action: 'share_results',
-          category: 'face_analysis',
-          label: 'web_share_api',
-          value: state.score
+        trackEvent('share_results', {
+          share_method: 'web_share_api',
+          score_band: getScoreBand(state.score)
         });
         
         toast({
@@ -110,11 +105,9 @@ const Results = () => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        trackEvent({
-          action: 'share_results',
-          category: 'face_analysis',
-          label: 'download',
-          value: state.score
+        trackEvent('share_results', {
+          share_method: 'download',
+          score_band: getScoreBand(state.score)
         });
         
         toast({
@@ -125,11 +118,7 @@ const Results = () => {
     } catch (error) {
       console.error('Share failed:', error);
       
-      trackEvent({
-        action: 'share_error',
-        category: 'face_analysis',
-        label: error instanceof Error ? error.message : 'unknown_error'
-      });
+      trackEvent('share_error', { error_type: classifyError(error) });
       
       toast({
         title: "Share failed",
