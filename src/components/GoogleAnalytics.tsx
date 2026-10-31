@@ -1,10 +1,11 @@
 
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { shouldLoadAnalytics } from '@/lib/analytics';
 
 declare global {
   interface Window {
-    gtag: (command: string, targetId: string, config?: any) => void;
+    gtag: (command: string, targetId: string, config?: Record<string, unknown>) => void;
   }
 }
 
@@ -16,6 +17,8 @@ const GoogleAnalytics = ({ measurementId }: GoogleAnalyticsProps) => {
   const location = useLocation();
 
   useEffect(() => {
+    if (!shouldLoadAnalytics()) return;
+
     // Load Google Analytics script
     const script1 = document.createElement('script');
     script1.async = true;
@@ -40,7 +43,7 @@ const GoogleAnalytics = ({ measurementId }: GoogleAnalyticsProps) => {
 
   // Track page views on route changes
   useEffect(() => {
-    if (typeof window.gtag !== 'undefined') {
+    if (shouldLoadAnalytics() && typeof window.gtag !== 'undefined') {
       window.gtag('config', measurementId, {
         page_path: location.pathname,
       });
