@@ -8,6 +8,7 @@ import { GA_MEASUREMENT_ID } from "@/lib/env";
 import Index from "./pages/Index";
 import Results from "./pages/Results";
 import NotFound from "./pages/NotFound";
+import SiteFooter from "@/components/SiteFooter";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <SiteFooter />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
