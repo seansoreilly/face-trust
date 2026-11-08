@@ -61,6 +61,15 @@ export const ALLOWED_ORIGINS = [
   'http://127.0.0.1:8080',
 ];
 
+// This project's own Vercel preview deployments only (team slug
+// melbourne-computing): face-trust-<hash>-melbourne-computing.vercel.app and
+// face-trust-git-<branch>-melbourne-computing.vercel.app. Never a bare *.vercel.app.
+export const PREVIEW_ORIGIN_PATTERN = /^https:\/\/face-trust-[a-z0-9-]+-melbourne-computing\.vercel\.app$/;
+
+export function isAllowedOrigin(origin) {
+  return typeof origin === 'string' && (ALLOWED_ORIGINS.includes(origin) || PREVIEW_ORIGIN_PATTERN.test(origin));
+}
+
 /**
  * Sets CORS headers. The allow-origin header is only emitted for allowlisted
  * origins. Same-origin browser requests do not need CORS headers, so they keep
@@ -70,7 +79,7 @@ export const ALLOWED_ORIGINS = [
 export function applyCors(req, res) {
   const origin = req.headers.origin;
   res.setHeader('Vary', 'Origin');
-  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+  if (isAllowedOrigin(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');

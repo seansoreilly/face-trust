@@ -5,6 +5,7 @@ import {
   createRateLimiter,
   getClientIp,
   InvalidImageError,
+  isAllowedOrigin,
   MAX_IMAGE_BYTES,
   validateImageInput,
 } from './security.js';
@@ -65,6 +66,32 @@ describe('applyCors', () => {
     const { req, res, headers } = make('https://evil.example');
     applyCors(req, res);
     expect(headers['Access-Control-Allow-Origin']).toBeUndefined();
+  });
+
+  it('allows this project\'s own Vercel preview origins', () => {
+    for (const o of [
+      'https://face-trust-abc123xyz-melbourne-computing.vercel.app',
+      'https://face-trust-git-security-weekly-melbourne-computing.vercel.app',
+    ]) {
+      const { req, res, headers } = make(o);
+      applyCors(req, res);
+      expect(headers['Access-Control-Allow-Origin']).toBe(o);
+    }
+  });
+
+  it('rejects look-alike and foreign vercel origins', () => {
+    for (const o of [
+      'https://evil.vercel.app',
+      'https://other-project-abc-melbourne-computing.vercel.app',
+      'https://face-trust-abc-other-team.vercel.app',
+      'https://face-trust-abc-melbourne-computing.vercel.app.evil.com',
+      'https://evil.com/face-trust-abc-melbourne-computing.vercel.app',
+      'http://face-trust-abc-melbourne-computing.vercel.app',
+      'https://xface-trust-abc-melbourne-computing.vercel.app',
+      'https://face-trust-.evil-melbourne-computing.vercel.app',
+    ]) {
+      expect(isAllowedOrigin(o), o).toBe(false);
+    }
   });
 
   it('sets nothing for same-origin requests without an Origin header', () => {

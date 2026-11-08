@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { ALLOWED_ORIGINS, createRateLimiter, InvalidImageError, validateImageInput } from "../api/lib/security.js";
+import { createRateLimiter, isAllowedOrigin, InvalidImageError, validateImageInput } from "../api/lib/security.js";
 import { config } from "./config.js";
 import { analyzeFaceImage, AnthropicApiError, UnreadableAnalysisError } from "../api/lib/analyzeFace.js";
 
@@ -9,7 +9,7 @@ const PORT = config.PORT || 3001;
 const isDev = (config.NODE_ENV || process.env.NODE_ENV) === "development";
 
 // Middleware
-app.use(cors({ origin: ALLOWED_ORIGINS, methods: ["GET", "POST", "OPTIONS"] }));
+app.use(cors({ origin: (origin, cb) => cb(null, !origin || isAllowedOrigin(origin)), methods: ["GET", "POST", "OPTIONS"] }));
 // 3 MB decoded image is ~4 MB base64; leave headroom for the JSON wrapper.
 app.use(express.json({ limit: "5mb" }));
 
