@@ -82,7 +82,10 @@ vercel env pull       # Creates .env.local
 - **Request**: `{ "image": "data:image/jpeg;base64,..." }`
 - **Response**: `{ "score": 0-100, "honesty": 0-100, "reliability": 0-100, "explanation": "..." }`
 - **Timeout**: 30 seconds (Vercel)
-- **Features**: CORS enabled, structured outputs (guaranteed-valid JSON), 502 on unreadable AI response
+- **Features**: structured outputs (guaranteed-valid JSON), 502 on unreadable AI response
+- **Input limits**: `image` must be a `data:image/(jpeg|png);base64,` string, max ~3 MB decoded, max 25 MP (sharp `limitInputPixels`); otherwise 400. The frontend re-encodes uploads to JPEG <=2048px before sending. Validation lives in `api/lib/security.js` (shared with `server/index.js`).
+- **CORS**: allowlist only (facetrust.info, www.facetrust.info, localhost dev origins) via `applyCors`; no `*`. Same-origin requests need no CORS headers.
+- **Rate limit**: best-effort 10 req / 10 min per client IP plus a global per-instance cap, 429 + `Retry-After`. In-memory per warm instance, so NOT a durable control; use a Vercel WAF rate-limit rule and an Anthropic spend limit.
 
 ### GET /api/test-env (Vercel only)
 - **Purpose**: Debug environment variables and configuration
@@ -150,11 +153,7 @@ export const env = {
 ```
 
 ### 5. CORS Configuration
-All API endpoints support CORS for cross-origin requests:
-```javascript
-res.setHeader('Access-Control-Allow-Origin', '*');
-res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-```
+`/api/analyze-face` uses the origin allowlist in `api/lib/security.js` (`ALLOWED_ORIGINS`); add new origins there. `vercel.json` also sets nosniff, X-Frame-Options DENY, Referrer-Policy and a Permissions-Policy (no CSP enforced yet).
 
 ## Deployment
 
