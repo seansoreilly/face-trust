@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import sharp from 'sharp';
+import { InvalidImageError, MAX_IMAGE_PIXELS, validateImageInput } from './security.js';
 
 const SYSTEM_PROMPT = `You are an expert facial psychologist and micro-expression analyst with advanced training in physiognomy and facial action coding systems (FACS).
 
@@ -63,17 +64,21 @@ const SYSTEM_PROMPT = `You are an expert facial psychologist and micro-expressio
  * Resizes a base64-encoded image and returns it ready for the Claude API.
  */
 async function prepareImage(image) {
-  const base64Data = image.split(',')[1] || image;
-  const mediaType = image.startsWith('data:image/jpeg') ? 'image/jpeg' : 'image/png';
+  const { buffer, mediaType } = validateImageInput(image);
 
-  const imageBuffer = Buffer.from(base64Data, 'base64');
-  const resizedBuffer = await sharp(imageBuffer)
-    .resize(2048, 2048, {
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
-    .toFormat(mediaType === 'image/jpeg' ? 'jpeg' : 'png', { quality: 85 })
-    .toBuffer();
+  let resizedBuffer;
+  try {
+    resizedBuffer = await sharp(buffer, { limitInputPixels: MAX_IMAGE_PIXELS })
+      .resize(2048, 2048, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .toFormat(mediaType === 'image/jpeg' ? 'jpeg' : 'png', { quality: 85 })
+      .toBuffer();
+  } catch (err) {
+    // Undecodable data or pixel-limit exceeded: a client error, not a server one.
+    throw new InvalidImageError('Image could not be decoded or is too large in dimensions');
+  }
 
   return { base64Data: resizedBuffer.toString('base64'), mediaType };
 }

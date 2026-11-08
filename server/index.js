@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { createRateLimiter, isAllowedOrigin, InvalidImageError, validateImageInput } from "../api/lib/security.js";
 import { config } from "./config.js";
 import { analyzeFaceImage, AnthropicApiError, UnreadableAnalysisError } from "../api/lib/analyzeFace.js";
 
@@ -8,11 +9,16 @@ const PORT = config.PORT || 3001;
 const isDev = (config.NODE_ENV || process.env.NODE_ENV) === "development";
 
 // Middleware
-app.use(cors({
-  origin: ['http://localhost:8080', 'http://localhost:3000', 'http://127.0.0.1:8080', 'http://127.0.0.1:3000'],
-  credentials: true
-}));
-app.use(express.json({ limit: "10mb" }));
+app.use(cors({ origin: (origin, cb) => cb(null, !origin || isAllowedOrigin(origin)), methods: ["GET", "POST", "OPTIONS"] }));
+// 3 MB decoded image is ~4 MB base64; leave headroom for the JSON wrapper.
+app.use(express.json({ limit: "5mb" }));
+
+// Best-effort limiter: in-process only (resets on restart, not shared between
+// instances). Keyed on the socket address; set TRUST_PROXY=1 only when running
+// behind a proxy that overwrites X-Forwarded-For. A WAF rule and an Anthropic
+// spend limit are the durable controls.
+if (process.env.TRUST_PROXY) app.set("trust proxy", Number(process.env.TRUST_PROXY) || 1);
+const rateLimit = createRateLimiter({ perKeyMax: 10, windowMs: 10 * 60 * 1000, globalMax: 200 });
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -21,12 +27,15 @@ app.get("/health", (req, res) => {
 
 // Face analysis endpoint
 app.post("/api/analyze-face", async (req, res) => {
-  try {
-    const { image } = req.body;
+  const limit = rateLimit(req.ip || "unknown");
+  if (!limit.allowed) {
+    res.set("Retry-After", String(limit.retryAfter));
+    return res.status(429).json({ error: "Too many requests. Please try again later." });
+  }
 
-    if (!image) {
-      return res.status(400).json({ error: "No image provided" });
-    }
+  try {
+    validateImageInput(req.body?.image);
+    const { image } = req.body;
 
     const anthropicApiKey = config.ANTHROPIC_API_KEY;
     if (!anthropicApiKey) {
@@ -39,6 +48,10 @@ app.post("/api/analyze-face", async (req, res) => {
     const analysisResult = await analyzeFaceImage(image, anthropicApiKey);
     res.json(analysisResult);
   } catch (error) {
+    if (error instanceof InvalidImageError) {
+      return res.status(400).json({ error: error.message });
+    }
+
     console.error("Error in face analysis:", error);
 
     if (error instanceof UnreadableAnalysisError) {

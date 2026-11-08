@@ -1,13 +1,16 @@
+import { applyCors, createRateLimiter, getClientIp, InvalidImageError, validateImageInput } from './lib/security.js';
 import { analyzeFaceImage, AnthropicApiError, UnreadableAnalysisError } from './lib/analyzeFace.js';
 
+// Best-effort limiter: state is per warm serverless instance (not shared across
+// instances, reset on cold start), so it only blunts bursts. The durable
+// controls are a Vercel WAF rate-limit rule and an Anthropic spend limit.
+const rateLimit = createRateLimiter({ perKeyMax: 10, windowMs: 10 * 60 * 1000, globalMax: 200 });
+
 export default async function handler(req, res) {
-  // Enable CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  applyCors(req, res);
 
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
+    res.status(204).end();
     return;
   }
 
@@ -16,14 +19,18 @@ export default async function handler(req, res) {
     return;
   }
 
+  const limit = rateLimit(getClientIp(req));
+  if (!limit.allowed) {
+    res.setHeader('Retry-After', String(limit.retryAfter));
+    res.status(429).json({ error: 'Too many requests. Please try again later.' });
+    return;
+  }
+
   const isDev = process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'development';
 
   try {
+    validateImageInput(req.body?.image);
     const { image } = req.body;
-
-    if (!image) {
-      return res.status(400).json({ error: 'No image provided' });
-    }
 
     const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
 
@@ -40,6 +47,10 @@ export default async function handler(req, res) {
     const analysisResult = await analyzeFaceImage(image, anthropicApiKey);
     res.json(analysisResult);
   } catch (error) {
+    if (error instanceof InvalidImageError) {
+      return res.status(400).json({ error: error.message });
+    }
+
     console.error('Error in face analysis:', error);
 
     if (error instanceof UnreadableAnalysisError) {
