@@ -36,12 +36,12 @@ export default async function handler(req, res) {
 
     if (!anthropicApiKey) {
       console.error('Anthropic API key not configured');
-      return res.status(500).json({ error: 'Anthropic API key not configured' });
+      return res.status(500).json({ error: 'Analysis failed' });
     }
 
     if (!anthropicApiKey.startsWith('sk-ant-')) {
       console.error('Anthropic API key format invalid - should start with "sk-ant-"');
-      return res.status(500).json({ error: 'Anthropic API key format invalid' });
+      return res.status(500).json({ error: 'Analysis failed' });
     }
 
     const analysisResult = await analyzeFaceImage(image, anthropicApiKey);

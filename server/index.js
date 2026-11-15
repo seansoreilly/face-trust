@@ -5,6 +5,7 @@ import { config } from "./config.js";
 import { analyzeFaceImage, AnthropicApiError, UnreadableAnalysisError } from "../api/lib/analyzeFace.js";
 
 const app = express();
+app.disable("x-powered-by");
 const PORT = config.PORT || 3001;
 const isDev = (config.NODE_ENV || process.env.NODE_ENV) === "development";
 
@@ -42,7 +43,7 @@ app.post("/api/analyze-face", async (req, res) => {
       console.error("Anthropic API key not found in config");
       return res
         .status(500)
-        .json({ error: "Anthropic API key not configured" });
+        .json({ error: "Analysis failed" });
     }
 
     const analysisResult = await analyzeFaceImage(image, anthropicApiKey);
@@ -72,6 +73,14 @@ app.post("/api/analyze-face", async (req, res) => {
 
     res.status(500).json(errorResponse);
   }
+});
+
+// Final error handler: Express's default handler returns the stack trace unless
+// NODE_ENV=production (e.g. for an oversized or malformed JSON body).
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  const status = err?.status >= 400 && err?.status < 500 ? err.status : 500;
+  res.status(status).json({ error: status === 500 ? "Analysis failed" : "Invalid request" });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
